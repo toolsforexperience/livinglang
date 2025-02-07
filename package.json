@@ -53,33 +53,19 @@
 				]
 			}
 		],
-		"semanticTokenTypes": [
-			{
-				"id": "keyword",
-				"superType": "keyword",
-				"description": "Keywords like 'experience', 'space', 'sequence'"
-			},
-			{
-				"id": "variable",
-				"superType": "variable",
-				"description": "Variables like 'lighting', 'sound', 'duration'"
-			},
-			{
-				"id": "function",
-				"superType": "function",
-				"description": "Keywords like 'on', 'trigger', 'scene', 'atmosphere'"
-			}
-		],
 		"semanticTokenStyleDefaults": {
 			"*.keyword": {
 				"foreground": "#569CD6",
 				"bold": true
 			},
+			"*.function": {
+				"foreground": "#C586C0"
+			},
 			"*.variable": {
 				"foreground": "#9CDCFE"
 			},
-			"*.function": {
-				"foreground": "#C586C0"
+			"*.string": {
+				"foreground": "#CE9178"
 			}
 		}
 	},
