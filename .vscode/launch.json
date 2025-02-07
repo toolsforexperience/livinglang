@@ -1,0 +1,67 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Web Extension",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionDevelopmentKind=web"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: compile",
+            "presentation": "hidden",
+            "stopOnEntry": false,
+            "trace": false,
+            "internalConsoleOptions": "neverOpen",
+            "debugWebWorkerHost": true
+        },
+        {
+            "name": "Run Web Extension (No Debug)",
+            "type": "extensionHost",
+            "request": "launch",
+            "noDebug": true,
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionDevelopmentKind=web"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: compile",
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "name": "Run Web Extension (Watch Mode)",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionDevelopmentKind=web"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: watch",
+            "stopOnEntry": false,
+            "trace": false,
+            "internalConsoleOptions": "neverOpen",
+            "debugWebWorkerHost": true
+        },
+        {
+            "name": "Run in Chrome",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}",
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: compile"
+        }
+    ]
+}
