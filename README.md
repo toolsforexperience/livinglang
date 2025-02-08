@@ -35,23 +35,23 @@ A program written in LivingLang is a story to be executed and experienced by hum
 ```ts
 space Elsinore {
   atmosphere {
-    lighting = ambient("cold")
-    sound = background("wind_battlements")
-    fog = dense
+    lighting: ambient("cold")
+    sound: background("wind_battlements")
+    fog: dense 
   }
   
   zones {
     battlements {
-      height = elevated
-      exposure = extreme
+      height: elevated
+      exposure: extreme
     }
     throne_room {
-      lighting = formal
-      atmosphere = oppressive
+      lighting: formal
+      atmosphere: oppressive
     }
     chapel {
-      lighting = dim
-      atmosphere = sacred
+      lighting: dim
+      atmosphere: sacred
     }
   }
 }
@@ -63,10 +63,10 @@ actor Hamlet {
   archetypes: [prince, mourner, philosopher]
   temperament: [melancholic, intelligent, conflicted]
   
-  state {
-    grief = high
-    suspicion = growing
-    madness = potential
+  state: {
+    grief: high
+    suspicion: growing
+    madness: potential
   }
 }
 
@@ -77,7 +77,7 @@ actor Ghost {
   archetypes: [spirit, king, accuser]
   appearance: [armored, ethereal]
   
-  movement = {
+  movement: {
     style: ethereal
     pattern: deliberate
     constraints: [night_only, battlements_only]
@@ -108,9 +108,9 @@ dialogue ghostReveal {
 
 scene GhostOnBattlements in space Elsinore.battlements {
   atmosphere {
-    lighting = night
-    sound = [wind_howling, distant_bells]
-    temperature = freezing
+    lighting: night
+    sound: [wind_howling, distant_bells]
+    temperature: freezing
   }
   
   actions {
@@ -122,9 +122,9 @@ scene GhostOnBattlements in space Elsinore.battlements {
 
 sequence OpeningNight {
   scene GuardWatch {
-    duration = 10.minutes
+    duration: 10.minutes
     atmosphere.buildTension()
-    Ghost.appearAndVanish(times = 2)
+    Ghost.appearAndVanish(times: 2)
   }
   
   scene GhostOnBattlements
@@ -183,16 +183,16 @@ Actors are people following a script, that can interact with the audience and sp
 
 ```ts
 actor Guide {
-  behavior = FlowField {
-    attract = audience.centers
-    avoid = obstacles
-    style = "natural"
+  behavior: FlowField {
+    attract: audience.centers
+    avoid: obstacles
+    style: "natural"
   }
 
   interaction {
-    radius = 2.meters
-    on_approach = greet
-    on_engage = respond_to_interest
+    radius: 2.meters
+    on_approach: greet
+    on_engage: respond_to_interest
   }
 }
 ```
@@ -246,9 +246,14 @@ state_machine Tension {
 }
 ```
 
-## Installation
+## Roadmap
 
-
+- [ ] Implement the core language features in the language server
+- [ ] Experiment with AI integration for dynamic details
+- [ ] Add support for more complex narratives and audience interaction
+- [ ] Integrate with providers for physical spaces
+- [ ] Integrate with AI visualization tools
+- [ ] Experiment with a potential intellectual property management system
 
 ## Development
 
