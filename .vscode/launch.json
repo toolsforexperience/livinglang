@@ -50,18 +50,6 @@
             "trace": false,
             "internalConsoleOptions": "neverOpen",
             "debugWebWorkerHost": true
-        },
-        {
-            "name": "Run in Chrome",
-            "type": "chrome",
-            "request": "launch",
-            "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}",
-            "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
-            "preLaunchTask": "npm: compile"
         }
     ]
 }

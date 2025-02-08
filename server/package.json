@@ -1,19 +1,25 @@
 {
-	"name": "lsp-web-extension-sample-server",
-	"description": "Example implementation of a language server in a web extension.",
+	"name": "livinglang-server",
+	"description": "Language server for LivingLang - An experience language for creating immmersive stories",
 	"version": "1.0.0",
-	"author": "Microsoft Corporation",
+	"author": "Piotr Trzpil",
 	"license": "MIT",
 	"engines": {
-		"node": "*"
+		"node": ">=20.11.0"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-extension-samples"
+		"url": "https://github.com/livinglang/livinglang"
 	},
 	"dependencies": {
 		"vscode-languageserver": "^9.0.1",
 		"vscode-languageserver-textdocument": "^1.0.11"
 	},
-	"scripts": {}
+	"devDependencies": {
+		"typescript": "^5.3.3"
+	},
+	"scripts": {
+		"compile": "tsc -b",
+		"watch": "tsc -b -w"
+	}
 }

@@ -1,20 +1,27 @@
 {
-	"name": "lsp-web-extension-sample",
-	"description": "A language server in a web extension",
-	"author": "Microsoft Corporation",
+	"name": "livinglang",
+	"description": "An experience language for creating immmersive stories.",
+	"author": "Piotr Trzpil",
 	"license": "MIT",
 	"version": "1.0.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-extension-samples"
+		"url": "https://github.com/livinglang/livinglang"
 	},
-	"publisher": "pt",
-	"categories": [],
+	"publisher": "PiotrTrzpil",
+	"categories": [
+		"Programming Languages"
+	],
 	"keywords": [
-		"multi-root ready"
+		"livinglang",
+		"immersive",
+		"storytelling",
+		"narrative",
+		"experience"
 	],
 	"engines": {
-		"vscode": "^1.85.0"
+		"vscode": "^1.85.0",
+		"node": ">=20.11.0"
 	},
 	"activationEvents": [
 		"onLanguage:livinglang"
@@ -78,19 +85,20 @@
 		"test": "ts-mocha -p tsconfig.json test/**/*.ts",
 		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
 		"chrome": "npm run compile && vscode-test-web --browserType=chromium --extensionDevelopmentPath=. ./test-data",
-		"vsix": "npm run package && mkdir -p dist && cd dist && zip -r ../livinglang.vsix ../package.json ../client/dist/* ../server/dist/*"
+		"vsix": "npm run package && vsce package"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.13.0",
 		"@stylistic/eslint-plugin": "^2.9.0",
-		"@types/mocha": "^10.0.10",
+		"@types/mocha": "^10.0.6",
 		"@vscode/test-web": "^0.0.51",
+		"@vscode/vsce": "^3.2.2",
 		"eslint": "^9.13.0",
-		"mocha": "^11.1.0",
+		"mocha": "^10.2.0",
 		"path-browserify": "^1.0.1",
 		"ts-loader": "^9.5.1",
 		"ts-mocha": "^10.0.0",
-		"typescript": "^5.7.2",
+		"typescript": "^5.3.3",
 		"typescript-eslint": "^8.16.0",
 		"vscode-languageserver-textdocument": "^1.0.12",
 		"webpack": "^5.90.1",
