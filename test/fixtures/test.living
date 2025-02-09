@@ -1,20 +1,46 @@
 experience TestHighlighting {
   space MainArea {
     atmosphere {
-      lighting = ambient("soft")
-      sound = background("nature")
-      duration = 5.minutes
+      lighting: ambient_soft
+      sound: nature_sounds
+      temperature: warm
     }
 
-    on audience.enter {
-      trigger welcome_sequence
+    zones {
+      welcome_zone {
+        lighting: bright
+        activity: greeting
+      }
+    }
+  }
+
+  actor Guide {
+    name: 'Test Guide'
+    description: 'A test character'
+    archetypes: [guide, mentor, helper]
+    
+    behavior {
+      style: welcoming
+      presence: gentle
+    }
+  }
+
+  scene WelcomeScene {
+    atmosphere {
+      lighting: bright
+      sound: welcome_music
+      duration: 5.minutes
+    }
+
+    actions {
+      Guide.greet()
+      Guide.explain_space()
     }
   }
 
   sequence welcome_sequence {
-    scene {
-      lighting.fadeTo("bright")
-      sound.play("welcome_music")
+    scene WelcomeScene {
+      duration: 10.minutes
     }
   }
 } 

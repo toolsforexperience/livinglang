@@ -73,6 +73,13 @@
 			},
 			"*.string": {
 				"foreground": "#CE9178"
+			},
+			"*.property": {
+				"foreground": "#4EC9B0",
+				"italic": true
+			},
+			"*.value": {
+				"foreground": "#DCDCAA"
 			}
 		}
 	},
