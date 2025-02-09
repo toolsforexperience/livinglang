@@ -1,25 +1,22 @@
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 // Token types
-export const tokenTypes = ['keyword', 'variable', 'function', 'string', 'property', 'value'];
+export const tokenTypes = ['keyword', 'function', 'string', 'property', 'value'];
 export const tokenTypesLegend = new Map(tokenTypes.map((type, index) => [type, index]));
 
 enum TokenType {
     Keyword = 0,
-    Variable = 1,
-    Function = 2,
-    String = 3,
-    Property = 4,
-    Value = 5
+    Function = 1,
+    String = 2,
+    Property = 3,
+    Value = 4
 }
 
 // Language keywords and variables
 const KEYWORDS = new Set([
     'experience', 'space', 'sequence', 'scene', 'actor',
-    'zones', 'actions', 'behavior', 'objects'
+    'zones', 'actions', 'behavior', 'objects', 'dialogue', 'monologue'
 ]);
-
-const VARIABLES = new Set(['lighting', 'sound', 'duration']);
 
 // Parser states
 type ParserState = 'default' | 'property' | 'value' | 'string' | 'array' | 'comment';
@@ -49,7 +46,7 @@ class Parser {
     private col = 0;
     private state = ParserState.Default;
     private currentToken = '';
-    private inAtmosphere = false;
+    private blockLevel = 0;
 
     constructor(document: TextDocument) {
         this.text = document.getText();
@@ -131,23 +128,28 @@ class Parser {
             return;
         }
 
-        // Handle strings
+        // Handle strings (including multiline)
         if (this.currentChar === '"' || this.currentChar === "'") {
+            // Check for triple quotes
+            if (this.currentChar === '"' && 
+                this.nextChar === '"' && 
+                this.pos + 2 < this.text.length && 
+                this.text[this.pos + 2] === '"') {
+                this.state = ParserState.String;
+                return;
+            }
             this.state = ParserState.String;
             return;
         }
 
-        // Handle atmosphere blocks
+        // Handle block delimiters
         if (this.currentChar === '{') {
-            if (this.tokens[this.tokens.length - 1]?.text.toLowerCase() === 'atmosphere') {
-                this.inAtmosphere = true;
-            }
+            this.blockLevel++;
             this.advance();
             return;
         }
-
         if (this.currentChar === '}') {
-            this.inAtmosphere = false;
+            this.blockLevel--;
             this.advance();
             return;
         }
@@ -166,22 +168,21 @@ class Parser {
             // Check if it's a property (followed by colon)
             if (this.currentChar === ':') {
                 this.state = ParserState.Property;
-                const word = this.currentToken.toLowerCase();
-                if (VARIABLES.has(word)) {
-                    this.addToken(this.currentToken, TokenType.Variable, startLine, startCol);
-                } else {
-                    this.addToken(this.currentToken, TokenType.Property, startLine, startCol);
-                }
+                this.addToken(this.currentToken, TokenType.Property, startLine, startCol);
                 this.advance(); // skip colon
                 return;
             }
 
-            // Check if it's a keyword or variable
+            // Check if it's a keyword or property
             const word = this.currentToken.toLowerCase();
             if (KEYWORDS.has(word)) {
                 this.addToken(this.currentToken, TokenType.Keyword, startLine, startCol);
-            } else if (VARIABLES.has(word)) {
-                this.addToken(this.currentToken, TokenType.Variable, startLine, startCol);
+            } else {
+                // Skip identifiers after keywords only if not in a block
+                const lastToken = this.tokens[this.tokens.length - 1];
+                if (!lastToken || lastToken.type !== TokenType.Keyword || this.blockLevel > 0) {
+                    this.addToken(this.currentToken, TokenType.Property, startLine, startCol);
+                }
             }
             return;
         }
@@ -238,21 +239,67 @@ class Parser {
     }
 
     private parseString(): void {
-        const quote = this.currentChar;
         const startCol = this.col;
         const startLine = this.line;
-        let string = quote;
+        let string = '';
         
-        this.advance(); // Skip opening quote
-        
-        while (this.pos < this.text.length && this.currentChar !== quote) {
-            string += this.currentChar;
-            this.advance();
-        }
-        
-        if (this.currentChar === quote) {
-            string += quote;
-            this.advance();
+        // Check for triple quotes
+        const isTripleQuote = 
+            this.currentChar === '"' && 
+            this.nextChar === '"' && 
+            this.pos + 2 < this.text.length && 
+            this.text[this.pos + 2] === '"';
+            
+        if (isTripleQuote) {
+            // Add opening triple quotes
+            string = '"""';
+            this.advance(); // first quote
+            this.advance(); // second quote
+            this.advance(); // third quote
+            
+            while (this.pos < this.text.length) {
+                // Check for end of multiline string
+                if (this.currentChar === '"' && 
+                    this.nextChar === '"' && 
+                    this.pos + 2 < this.text.length && 
+                    this.text[this.pos + 2] === '"') {
+                    string += '"""';
+                    this.advance(); // first quote
+                    this.advance(); // second quote
+                    this.advance(); // third quote
+                    break;
+                }
+                
+                // Add the current character (including newlines)
+                string += this.currentChar;
+                this.advance();
+            }
+        } else {
+            // Regular string handling
+            const quote = this.currentChar;
+            string = quote;
+            
+            this.advance(); // Skip opening quote
+            
+            while (this.pos < this.text.length) {
+                // Handle escaped quotes
+                if (this.currentChar === '\\' && this.nextChar === quote) {
+                    string += this.currentChar; // Add the backslash
+                    this.advance();
+                    string += this.currentChar; // Add the escaped quote
+                    this.advance();
+                    continue;
+                }
+                
+                if (this.currentChar === quote) {
+                    string += quote;
+                    this.advance();
+                    break;
+                }
+                
+                string += this.currentChar;
+                this.advance();
+            }
         }
         
         this.addToken(string, TokenType.String, startLine, startCol);

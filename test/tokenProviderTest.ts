@@ -67,13 +67,35 @@ describe('LivingLang Token Provider', () => {
                 { type: 'keyword', text: 'behavior' }
             ]);
         });
+
+        it('should identify dialogue and monologue keywords', () => {
+            const tokens = getTokensForText(`
+                dialogue {
+                    Hamlet: "Who's there?"
+                }
+                monologue {
+                    Hamlet: "To be, or not to be..."
+                    Ghost: "Boo!"
+                }
+            `);
+            assert.deepStrictEqual(tokens, [
+                { type: 'keyword', text: 'dialogue' },
+                { type: 'property', text: 'Hamlet' },
+                { type: 'string', text: '"Who\'s there?"' },
+                { type: 'keyword', text: 'monologue' },
+                { type: 'property', text: 'Hamlet' },
+                { type: 'string', text: '"To be, or not to be..."' },
+                { type: 'property', text: 'Ghost' },
+                { type: 'string', text: '"Boo!"' }
+            ]);
+        });
     });
 
     describe('Properties and Values', () => {
         it('should identify simple property-value pairs', () => {
             const tokens = getTokensForText('lighting: bright');
             assert.deepStrictEqual(tokens, [
-                { type: 'variable', text: 'lighting' },
+                { type: 'property', text: 'lighting' },
                 { type: 'value', text: 'bright' }
             ]);
         });
@@ -83,6 +105,32 @@ describe('LivingLang Token Provider', () => {
             assert.deepStrictEqual(tokens, [
                 { type: 'property', text: 'name' },
                 { type: 'string', text: '"Test Room"' }
+            ]);
+        });
+
+        it('should handle escaped quotes in strings', () => {
+            const tokens = getTokensForText('description: \'Former King of Denmark, Hamlet\\\'s father\'');
+            assert.deepStrictEqual(tokens, [
+                { type: 'property', text: 'description' },
+                { type: 'string', text: '\'Former King of Denmark, Hamlet\\\'s father\'' }
+            ]);
+        });
+
+        it('should handle multiline strings', () => {
+            const tokens = getTokensForText(`
+                monologue {
+                    Hamlet: """
+                        To be, or not to be, that is the question:
+                        Whether 'tis nobler in the mind to suffer
+                        The slings and arrows of outrageous fortune,
+                        Or to take Arms against a Sea of troubles...
+                    """
+                }
+            `);
+            assert.deepStrictEqual(tokens, [
+                { type: 'keyword', text: 'monologue' },
+                { type: 'property', text: 'Hamlet' },
+                { type: 'string', text: '"""\n                        To be, or not to be, that is the question:\n                        Whether \'tis nobler in the mind to suffer\n                        The slings and arrows of outrageous fortune,\n                        Or to take Arms against a Sea of troubles...\n                    """' }
             ]);
         });
 
@@ -108,9 +156,37 @@ describe('LivingLang Token Provider', () => {
             `);
             assert.deepStrictEqual(tokens, [
                 { type: 'keyword', text: 'space' },
-             //   { type: 'property', text: 'atmosphere' },
-                { type: 'variable', text: 'lighting' },
+                { type: 'property', text: 'atmosphere' },
+                { type: 'property', text: 'lighting' },
                 { type: 'value', text: 'ambient' }
+            ]);
+        });
+
+        it('should handle atmosphere as a regular property', () => {
+            const tokens = getTokensForText(`
+                space Room {
+                    atmosphere {
+                        lighting: bright
+                        sound: quiet
+                    }
+                    atmosphere {
+                        lighting: dark
+                        sound: loud
+                    }
+                }
+            `);
+            assert.deepStrictEqual(tokens, [
+                { type: 'keyword', text: 'space' },
+                { type: 'property', text: 'atmosphere' },
+                { type: 'property', text: 'lighting' },
+                { type: 'value', text: 'bright' },
+                { type: 'property', text: 'sound' },
+                { type: 'value', text: 'quiet' },
+                { type: 'property', text: 'atmosphere' },
+                { type: 'property', text: 'lighting' },
+                { type: 'value', text: 'dark' },
+                { type: 'property', text: 'sound' },
+                { type: 'value', text: 'loud' }
             ]);
         });
 
@@ -156,7 +232,7 @@ describe('LivingLang Token Provider', () => {
             `);
             assert.deepStrictEqual(tokens, [
                 { type: 'keyword', text: 'space' },
-                { type: 'variable', text: 'lighting' },
+                { type: 'property', text: 'lighting' },
                 { type: 'value', text: 'bright' }
             ]);
         });

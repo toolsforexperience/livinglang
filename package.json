@@ -68,15 +68,11 @@
 			"*.function": {
 				"foreground": "#C586C0"
 			},
-			"*.variable": {
-				"foreground": "#9CDCFE"
-			},
 			"*.string": {
 				"foreground": "#CE9178"
 			},
 			"*.property": {
-				"foreground": "#4EC9B0",
-				"italic": true
+				"foreground": "#9CDCFE"
 			},
 			"*.value": {
 				"foreground": "#DCDCAA"
