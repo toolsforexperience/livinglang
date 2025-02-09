@@ -50,7 +50,14 @@ connection.onInitialize((_params: InitializeParams): InitializeResult => {
 			semanticTokensProvider: {
 				full: true,
 				legend: {
-					tokenTypes,
+					tokenTypes: [
+						'keyword',      // 0: keywords
+						'method',       // 1: functions (using method as it's a standard type)
+						'string',       // 2: strings
+						'property',     // 3: properties
+						'variable',     // 4: values (using variable as it's more standard)
+						'class'         // 5: names (using class as it typically gets the styling we want)
+					],
 					tokenModifiers: []
 				}
 			}
