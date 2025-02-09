@@ -60,6 +60,32 @@
 				]
 			}
 		],
+		"semanticTokenTypes": [
+			{
+				"id": "keyword",
+				"description": "Language keywords"
+			},
+			{
+				"id": "function",
+				"description": "Function calls and declarations"
+			},
+			{
+				"id": "string",
+				"description": "String literals"
+			},
+			{
+				"id": "property",
+				"description": "Property identifiers"
+			},
+			{
+				"id": "value",
+				"description": "Values and constants"
+			},
+			{
+				"id": "name",
+				"description": "Names following keywords like actor, space, scene"
+			}
+		],
 		"semanticTokenStyleDefaults": {
 			"*.keyword": {
 				"foreground": "#569CD6",
@@ -76,6 +102,10 @@
 			},
 			"*.value": {
 				"foreground": "#DCDCAA"
+			},
+			"*.name": {
+				"foreground": "#4EC9B0",
+				"bold": true
 			}
 		}
 	},

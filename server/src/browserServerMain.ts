@@ -1,4 +1,3 @@
-
 import { createConnection, BrowserMessageReader, BrowserMessageWriter } from 'vscode-languageserver/browser';
 import { 
 	InitializeParams, 
@@ -41,6 +40,7 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T
 
 connection.onInitialize((_params: InitializeParams): InitializeResult => {
 	console.log('Server initializing...');
+	console.log('Registering token types:', tokenTypes);
 	return {
 		capabilities: {
 			textDocumentSync: {
@@ -60,7 +60,9 @@ connection.onInitialize((_params: InitializeParams): InitializeResult => {
 
 // Process tokens in background
 const processTokensAsync = async (document: TextDocument) => {
-	return withTimeout(Promise.resolve(processSemanticTokens(document)), TIMEOUT);
+	const tokens = await withTimeout(Promise.resolve(processSemanticTokens(document)), TIMEOUT);
+	console.log('Processed tokens:', tokens);
+	return tokens;
 };
 
 // Clear cache when document changes
@@ -85,16 +87,19 @@ connection.onRequest('textDocument/semanticTokens/full', async params => {
 	const document = documents.get(uri);
 	
 	if (!document || document.languageId !== 'livinglang') {
+		console.log('Invalid document or language ID');
 		return { data: [] };
 	}
 
 	const cached = tokenCache.get(uri);
 	if (cached && cached.version === document.version) {
+		console.log('Using cached tokens:', cached.data);
 		return { data: cached.data };
 	}
 
 	try {
 		const tokens = await processTokensAsync(document);
+		console.log('Generated new tokens:', tokens);
 		tokenCache.set(uri, { version: document.version, data: tokens });
 		return { data: tokens };
 	} catch (error) {

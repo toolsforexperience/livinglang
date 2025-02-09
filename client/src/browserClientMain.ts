@@ -1,6 +1,7 @@
 import { ExtensionContext, Uri, window, SemanticTokens, workspace, TextDocument, CancellationToken, ProviderResult } from 'vscode';
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { LanguageClient } from 'vscode-languageclient/browser';
+import * as vscode from 'vscode';
 
 let client: LanguageClient;
 let lastRequestTime = 0;
@@ -122,13 +123,34 @@ export async function activate(context: ExtensionContext) {
 		await client.start();
 		console.log(`Client started in ${Date.now() - startTime}ms`);
 
+		// Register semantic token provider
+		const tokenTypes = ['keyword', 'function', 'string', 'property', 'value', 'name'];
+		const tokenModifiers = [];
+		const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+
+		console.log('Registering semantic token provider with types:', tokenTypes);
+		console.log('Package.json semantic token styles should be applied from semanticTokenStyleDefaults');
+
+		context.subscriptions.push(
+			vscode.languages.registerDocumentSemanticTokensProvider(
+				{ language: 'livinglang' },
+				{
+					provideDocumentSemanticTokens: async (document: vscode.TextDocument) => {
+						console.log('Providing semantic tokens for document:', document.uri.toString());
+						const tokens = await client.sendRequest<{ data: number[] }>('textDocument/semanticTokens/full', {
+							textDocument: { uri: document.uri.toString() }
+						});
+						console.log('Received token data:', tokens.data);
+						return new vscode.SemanticTokens(new Uint32Array(tokens.data));
+					}
+				},
+				legend
+			)
+		);
+
 		// Configure workspace
 		workspace.getConfiguration('editor').update('semanticTokenColorCustomizations', {
-			enabled: true,
-			rules: {
-				'*.declaration': { bold: true },
-				'*.definition': { bold: true }
-			}
+			enabled: true
 		}, true);
 
 	} catch (error) {

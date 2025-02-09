@@ -1,7 +1,7 @@
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 // Token types
-export const tokenTypes = ['keyword', 'function', 'string', 'property', 'value'];
+export const tokenTypes = ['keyword', 'function', 'string', 'property', 'value', 'name'];
 export const tokenTypesLegend = new Map(tokenTypes.map((type, index) => [type, index]));
 
 enum TokenType {
@@ -9,13 +9,19 @@ enum TokenType {
     Function = 1,
     String = 2,
     Property = 3,
-    Value = 4
+    Value = 4,
+    Name = 5
 }
 
 // Language keywords and variables
 const KEYWORDS = new Set([
     'experience', 'space', 'sequence', 'scene', 'actor',
     'zones', 'actions', 'behavior', 'objects', 'dialogue', 'monologue'
+]);
+
+// Keywords that should be followed by a name
+const NAME_KEYWORDS = new Set([
+    'actor', 'space', 'scene', 'experience'
 ]);
 
 // Parser states
@@ -178,9 +184,12 @@ class Parser {
             if (KEYWORDS.has(word)) {
                 this.addToken(this.currentToken, TokenType.Keyword, startLine, startCol);
             } else {
-                // Skip identifiers after keywords only if not in a block
+                // Check if this is a name following a name keyword
                 const lastToken = this.tokens[this.tokens.length - 1];
-                if (!lastToken || lastToken.type !== TokenType.Keyword || this.blockLevel > 0) {
+                if (lastToken && lastToken.type === TokenType.Keyword && 
+                    NAME_KEYWORDS.has(lastToken.text.toLowerCase())) {
+                    this.addToken(this.currentToken, TokenType.Name, startLine, startCol);
+                } else if (!lastToken || lastToken.type !== TokenType.Keyword || this.blockLevel > 0) {
                     this.addToken(this.currentToken, TokenType.Property, startLine, startCol);
                 }
             }

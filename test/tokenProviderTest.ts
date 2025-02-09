@@ -49,7 +49,8 @@ describe('LivingLang Token Provider', () => {
         it('should identify basic keywords', () => {
             const tokens = getTokensForText('experience Test {}');
             assert.deepStrictEqual(tokens, [
-                { type: 'keyword', text: 'experience' }
+                { type: 'keyword', text: 'experience' },
+                { type: 'name', text: 'Test' }
             ]);
         });
 
@@ -63,6 +64,7 @@ describe('LivingLang Token Provider', () => {
             `);
             assert.deepStrictEqual(tokens, [
                 { type: 'keyword', text: 'space' },
+                { type: 'name', text: 'Room' },
                 { type: 'keyword', text: 'zones' },
                 { type: 'keyword', text: 'behavior' }
             ]);
@@ -87,6 +89,37 @@ describe('LivingLang Token Provider', () => {
                 { type: 'string', text: '"To be, or not to be..."' },
                 { type: 'property', text: 'Ghost' },
                 { type: 'string', text: '"Boo!"' }
+            ]);
+        });
+
+        it('should identify names after specific keywords', () => {
+            const tokens = getTokensForText(`
+                actor Hamlet {
+                    name: "Prince of Denmark"
+                }
+                scene Elsinore {
+                    description: "Castle in Denmark"
+                }
+                space ThroneRoom {
+                    atmosphere {
+                        lighting: dark
+                    }
+                }
+            `);
+            assert.deepStrictEqual(tokens, [
+                { type: 'keyword', text: 'actor' },
+                { type: 'name', text: 'Hamlet' },
+                { type: 'property', text: 'name' },
+                { type: 'string', text: '"Prince of Denmark"' },
+                { type: 'keyword', text: 'scene' },
+                { type: 'name', text: 'Elsinore' },
+                { type: 'property', text: 'description' },
+                { type: 'string', text: '"Castle in Denmark"' },
+                { type: 'keyword', text: 'space' },
+                { type: 'name', text: 'ThroneRoom' },
+                { type: 'property', text: 'atmosphere' },
+                { type: 'property', text: 'lighting' },
+                { type: 'value', text: 'dark' }
             ]);
         });
     });
@@ -156,6 +189,7 @@ describe('LivingLang Token Provider', () => {
             `);
             assert.deepStrictEqual(tokens, [
                 { type: 'keyword', text: 'space' },
+                { type: 'name', text: 'Room' },
                 { type: 'property', text: 'atmosphere' },
                 { type: 'property', text: 'lighting' },
                 { type: 'value', text: 'ambient' }
@@ -177,6 +211,7 @@ describe('LivingLang Token Provider', () => {
             `);
             assert.deepStrictEqual(tokens, [
                 { type: 'keyword', text: 'space' },
+                { type: 'name', text: 'Room' },
                 { type: 'property', text: 'atmosphere' },
                 { type: 'property', text: 'lighting' },
                 { type: 'value', text: 'bright' },
@@ -202,6 +237,7 @@ describe('LivingLang Token Provider', () => {
             `);
             assert.deepStrictEqual(tokens, [
                 { type: 'keyword', text: 'actor' },
+                { type: 'name', text: 'Guide' },
                 { type: 'property', text: 'name' },
                 { type: 'string', text: "'Tour Guide'" },
                 { type: 'property', text: 'archetypes' },
@@ -218,7 +254,8 @@ describe('LivingLang Token Provider', () => {
         it('should handle empty blocks', () => {
             const tokens = getTokensForText('scene Empty {}');
             assert.deepStrictEqual(tokens, [
-                { type: 'keyword', text: 'scene' }
+                { type: 'keyword', text: 'scene' },
+                { type: 'name', text: 'Empty' }
             ]);
         });
 
@@ -232,6 +269,7 @@ describe('LivingLang Token Provider', () => {
             `);
             assert.deepStrictEqual(tokens, [
                 { type: 'keyword', text: 'space' },
+                { type: 'name', text: 'Room' },
                 { type: 'property', text: 'lighting' },
                 { type: 'value', text: 'bright' }
             ]);
