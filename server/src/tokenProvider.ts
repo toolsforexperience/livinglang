@@ -1,11 +1,9 @@
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
+// Token types
 export const tokenTypes = ['keyword', 'variable', 'function', 'string', 'property', 'value'];
-
-// Create a Map with the correct indices matching the array indices
 export const tokenTypesLegend = new Map(tokenTypes.map((type, index) => [type, index]));
 
-// Token types enum for better type safety
 enum TokenType {
     Keyword = 0,
     Variable = 1,
@@ -15,245 +13,301 @@ enum TokenType {
     Value = 5
 }
 
-// Keywords and their types
-const KEYWORDS = new Map([
-    ['experience', TokenType.Keyword],
-    ['space', TokenType.Keyword],
-    ['sequence', TokenType.Keyword],
-    ['scene', TokenType.Keyword],
-    ['actor', TokenType.Keyword],
-    ['zones', TokenType.Keyword],
-    ['actions', TokenType.Keyword],
-    ['behavior', TokenType.Keyword],
-    ['objects', TokenType.Keyword]
+// Language keywords and variables
+const KEYWORDS = new Set([
+    'experience', 'space', 'sequence', 'scene', 'actor',
+    'zones', 'actions', 'behavior', 'objects'
 ]);
 
-const VARIABLES = new Map([
-    ['lighting', TokenType.Variable],
-    ['sound', TokenType.Variable],
-    ['duration', TokenType.Variable]
-]);
+const VARIABLES = new Set(['lighting', 'sound', 'duration']);
+
+// Parser states
+type ParserState = 'default' | 'property' | 'value' | 'string' | 'array' | 'comment';
+
+const ParserState = {
+    Default: 'default' as ParserState,
+    Property: 'property' as ParserState,
+    Value: 'value' as ParserState,
+    String: 'string' as ParserState,
+    Array: 'array' as ParserState,
+    Comment: 'comment' as ParserState
+};
 
 interface Token {
+    text: string;
+    type: TokenType;
     line: number;
     character: number;
     length: number;
-    type: TokenType;
-    text: string;
 }
 
-class LivingLangParser {
-    private tokens: Token[] = [];
+class Parser {
     private text: string;
-    private pos: number = 0;
-    private line: number = 0;
-    private character: number = 0;
-    private inPropertyValue: boolean = false;
-    private blockLevel: number = 0;
-    private lastKeyword: string | null = null;
-    private inAtmosphere: boolean = false;
+    private tokens: Token[] = [];
+    private pos = 0;
+    private line = 0;
+    private col = 0;
+    private state = ParserState.Default;
+    private currentToken = '';
+    private inAtmosphere = false;
 
     constructor(document: TextDocument) {
         this.text = document.getText();
     }
 
-    private isWhitespace(char: string): boolean {
-        return /\s/.test(char);
-    }
-
-    private isWordChar(char: string): boolean {
-        return /[a-zA-Z0-9_-]/.test(char);
-    }
-
-    private peek(): string {
+    private get currentChar(): string {
         return this.pos < this.text.length ? this.text[this.pos] : '';
     }
 
-    private consume(): string {
-        const char = this.peek();
-        if (char === '\n') {
+    private get nextChar(): string {
+        return this.pos + 1 < this.text.length ? this.text[this.pos + 1] : '';
+    }
+
+    private advance(): void {
+        if (this.currentChar === '\n') {
             this.line++;
-            this.character = 0;
+            this.col = 0;
         } else {
-            this.character++;
+            this.col++;
         }
         this.pos++;
-        return char;
     }
 
-    private skipWhitespace() {
-        while (this.pos < this.text.length && this.isWhitespace(this.peek())) {
-            this.consume();
-        }
-    }
-
-    private readWord(): string {
-        let word = '';
-        while (this.pos < this.text.length && this.isWordChar(this.peek())) {
-            word += this.consume();
-        }
-        return word;
-    }
-
-    private readString(quote: string): string {
-        let str = quote;
-        this.consume(); // consume opening quote
-        while (this.pos < this.text.length) {
-            const char = this.peek();
-            if (char === quote) {
-                str += this.consume();
-                break;
-            }
-            str += this.consume();
-        }
-        return str;
-    }
-
-    private addToken(text: string, type: TokenType, startLine: number, startChar: number) {
+    private addToken(text: string, type: TokenType, line: number, col: number): void {
         this.tokens.push({
             text,
             type,
-            line: startLine,
-            character: startChar,
+            line,
+            character: col,
             length: text.length
         });
     }
 
-    private skipComment() {
-        // Skip until end of line
-        while (this.pos < this.text.length && this.peek() !== '\n') {
-            this.consume();
-        }
-    }
-
-    private handleIdentifier(word: string, startLine: number, startChar: number): TokenType | null {
-        const lowerWord = word.toLowerCase();
-        if (KEYWORDS.has(lowerWord)) {
-            this.lastKeyword = lowerWord;
-            return TokenType.Keyword;
-        } else if (VARIABLES.has(lowerWord) && (this.inAtmosphere || !this.inPropertyValue)) {
-            return TokenType.Variable;
-        }
-        return null;
-    }
-
     parse(): Token[] {
-        this.tokens = [];
-        this.pos = 0;
-        this.line = 0;
-        this.character = 0;
-        this.inPropertyValue = false;
-        this.blockLevel = 0;
-        this.lastKeyword = null;
-        this.inAtmosphere = false;
-
+        this.state = ParserState.Default;
+        
         while (this.pos < this.text.length) {
-            const char = this.peek();
-            const startLine = this.line;
-            const startChar = this.character;
-
-            if (this.isWhitespace(char)) {
-                this.skipWhitespace();
-                continue;
-            }
-
-            if (char === '/' && this.text[this.pos + 1] === '/') {
-                this.skipComment();
-                continue;
-            }
-
-            if (char === '"' || char === "'") {
-                const str = this.readString(char);
-                this.addToken(str, TokenType.String, startLine, startChar);
-                continue;
-            }
-
-            if (char === '{') {
-                this.blockLevel++;
-                if (this.lastKeyword === 'atmosphere') {
-                    this.inAtmosphere = true;
-                }
-                this.consume();
-                continue;
-            }
-
-            if (char === '}') {
-                this.blockLevel--;
-                if (this.inAtmosphere) {
-                    this.inAtmosphere = false;
-                }
-                this.consume();
-                continue;
-            }
-
-            if (this.isWordChar(char)) {
-                const word = this.readWord();
-                const nextChar = this.peek();
-
-                if (nextChar === ':') {
-                    this.consume(); // consume the colon
-                    const type = this.handleIdentifier(word, startLine, startChar);
-                    this.addToken(word, type || TokenType.Property, startLine, startChar);
-                    this.skipWhitespace();
-                    this.inPropertyValue = true;
+            const state = this.state;
+            switch (state) {
+                case ParserState.Default:
+                    this.parseDefault();
+                    break;
                     
-                    // Handle the value after the colon
-                    const valueStartLine = this.line;
-                    const valueStartChar = this.character;
+                case ParserState.Property:
+                    this.parseProperty();
+                    break;
                     
-                    if (this.peek() === '[') {
-                        this.consume(); // consume [
-                        this.skipWhitespace();
-                        while (this.pos < this.text.length) {
-                            if (this.isWordChar(this.peek())) {
-                                const arrayValue = this.readWord();
-                                this.addToken(arrayValue, TokenType.Value, this.line, this.character - arrayValue.length);
-                            } else if (this.peek() === ']') {
-                                this.consume();
-                                break;
-                            } else if (this.peek() === ',') {
-                                this.consume();
-                                this.skipWhitespace();
-                            } else {
-                                this.consume();
-                            }
-                        }
-                    } else if (this.peek() === '"' || this.peek() === "'") {
-                        const str = this.readString(this.peek());
-                        this.addToken(str, TokenType.String, valueStartLine, valueStartChar);
-                    } else if (this.isWordChar(this.peek())) {
-                        const value = this.readWord();
-                        this.addToken(value, TokenType.Value, valueStartLine, valueStartChar);
-                    }
-                    this.inPropertyValue = false;
-                } else {
-                    // Check if it's a keyword or variable
-                    const type = this.handleIdentifier(word, startLine, startChar);
-                    if (type !== null) {
-                        this.addToken(word, type, startLine, startChar);
-                    } else {
-                        // Skip identifiers after keywords (like "Test" in "experience Test")
-                        const lastToken = this.tokens[this.tokens.length - 1];
-                        if (!lastToken || lastToken.type !== TokenType.Keyword) {
-                            this.addToken(word, TokenType.Property, startLine, startChar);
-                        }
-                    }
-                }
-                continue;
+                case ParserState.Value:
+                    this.parseValue();
+                    break;
+                    
+                case ParserState.String:
+                    this.parseString();
+                    break;
+                    
+                case ParserState.Array:
+                    this.parseArray();
+                    break;
+                    
+                case ParserState.Comment:
+                    this.parseComment();
+                    break;
             }
+        }
+        
+        return this.tokens;
+    }
 
-            // Skip other characters
-            this.consume();
+    private parseDefault(): void {
+        // Skip whitespace
+        if (/\s/.test(this.currentChar)) {
+            this.advance();
+            return;
         }
 
-        return this.tokens;
+        // Handle comments
+        if (this.currentChar === '/' && this.nextChar === '/') {
+            this.state = ParserState.Comment;
+            return;
+        }
+
+        // Handle strings
+        if (this.currentChar === '"' || this.currentChar === "'") {
+            this.state = ParserState.String;
+            return;
+        }
+
+        // Handle atmosphere blocks
+        if (this.currentChar === '{') {
+            if (this.tokens[this.tokens.length - 1]?.text.toLowerCase() === 'atmosphere') {
+                this.inAtmosphere = true;
+            }
+            this.advance();
+            return;
+        }
+
+        if (this.currentChar === '}') {
+            this.inAtmosphere = false;
+            this.advance();
+            return;
+        }
+
+        // Start reading word
+        if (/[a-zA-Z0-9_-]/.test(this.currentChar)) {
+            const startCol = this.col;
+            const startLine = this.line;
+            this.currentToken = '';
+            
+            while (this.pos < this.text.length && /[a-zA-Z0-9_-]/.test(this.currentChar)) {
+                this.currentToken += this.currentChar;
+                this.advance();
+            }
+
+            // Check if it's a property (followed by colon)
+            if (this.currentChar === ':') {
+                this.state = ParserState.Property;
+                const word = this.currentToken.toLowerCase();
+                if (VARIABLES.has(word)) {
+                    this.addToken(this.currentToken, TokenType.Variable, startLine, startCol);
+                } else {
+                    this.addToken(this.currentToken, TokenType.Property, startLine, startCol);
+                }
+                this.advance(); // skip colon
+                return;
+            }
+
+            // Check if it's a keyword or variable
+            const word = this.currentToken.toLowerCase();
+            if (KEYWORDS.has(word)) {
+                this.addToken(this.currentToken, TokenType.Keyword, startLine, startCol);
+            } else if (VARIABLES.has(word)) {
+                this.addToken(this.currentToken, TokenType.Variable, startLine, startCol);
+            }
+            return;
+        }
+
+        this.advance();
+    }
+
+    private parseProperty(): void {
+        // Skip whitespace after property
+        if (/\s/.test(this.currentChar)) {
+            this.advance();
+            return;
+        }
+
+        // Start value parsing
+        this.state = ParserState.Value;
+    }
+
+    private parseValue(): void {
+        if (/\s/.test(this.currentChar)) {
+            this.advance();
+            return;
+        }
+
+        const startCol = this.col;
+        const startLine = this.line;
+
+        // Handle array values
+        if (this.currentChar === '[') {
+            this.state = ParserState.Array;
+            this.advance();
+            return;
+        }
+
+        // Handle string values
+        if (this.currentChar === '"' || this.currentChar === "'") {
+            this.state = ParserState.String;
+            return;
+        }
+
+        // Handle simple values
+        if (/[a-zA-Z0-9_-]/.test(this.currentChar)) {
+            let value = '';
+            while (this.pos < this.text.length && /[a-zA-Z0-9_-]/.test(this.currentChar)) {
+                value += this.currentChar;
+                this.advance();
+            }
+            this.addToken(value, TokenType.Value, startLine, startCol);
+            this.state = ParserState.Default;
+            return;
+        }
+
+        this.state = ParserState.Default;
+    }
+
+    private parseString(): void {
+        const quote = this.currentChar;
+        const startCol = this.col;
+        const startLine = this.line;
+        let string = quote;
+        
+        this.advance(); // Skip opening quote
+        
+        while (this.pos < this.text.length && this.currentChar !== quote) {
+            string += this.currentChar;
+            this.advance();
+        }
+        
+        if (this.currentChar === quote) {
+            string += quote;
+            this.advance();
+        }
+        
+        this.addToken(string, TokenType.String, startLine, startCol);
+        this.state = ParserState.Default;
+    }
+
+    private parseArray(): void {
+        if (/\s/.test(this.currentChar)) {
+            this.advance();
+            return;
+        }
+
+        // End of array
+        if (this.currentChar === ']') {
+            this.advance();
+            this.state = ParserState.Default;
+            return;
+        }
+
+        // Skip commas
+        if (this.currentChar === ',') {
+            this.advance();
+            return;
+        }
+
+        // Parse array value
+        if (/[a-zA-Z0-9_-]/.test(this.currentChar)) {
+            const startCol = this.col;
+            const startLine = this.line;
+            let value = '';
+            
+            while (this.pos < this.text.length && /[a-zA-Z0-9_-]/.test(this.currentChar)) {
+                value += this.currentChar;
+                this.advance();
+            }
+            
+            this.addToken(value, TokenType.Value, startLine, startCol);
+            return;
+        }
+
+        this.advance();
+    }
+
+    private parseComment(): void {
+        while (this.pos < this.text.length && this.currentChar !== '\n') {
+            this.advance();
+        }
+        this.state = ParserState.Default;
     }
 }
 
 export function processSemanticTokens(document: TextDocument): number[] {
-    const parser = new LivingLangParser(document);
+    const parser = new Parser(document);
     const tokens = parser.parse();
-
+    
     // Convert to semantic token format
     const result: number[] = [];
     let prevLine = 0;
