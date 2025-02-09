@@ -1,0 +1,164 @@
+space Elsinore {
+  atmosphere {
+    lighting: cold
+    sound: wind_battlements
+    fog: dense 
+  }
+  
+  zones {
+    battlements {
+      height: elevated
+      exposure: extreme
+    }
+    throne_room {
+      lighting: formal
+      atmosphere: oppressive
+    }
+    chapel {
+      lighting: dim
+      atmosphere: sacred
+    }
+  }
+}
+
+actor Hamlet {
+  name: 'Prince Hamlet'
+  description: 'Prince of Denmark, melancholic, philosophical'
+  
+  archetypes: [prince, mourner, philosopher]
+  temperament: [melancholic, intelligent, conflicted]
+  
+  state {
+    grief: high
+    suspicion: growing
+    madness: potential
+  }
+}
+
+actor Ghost {
+  name: 'Ghost of King Hamlet'
+  description: 'Former King of Denmark, Hamlet\'s father'
+  
+  archetypes: [spirit, king, accuser]
+  appearance: [armored, ethereal]
+  
+  movement {
+    style: ethereal
+    constraints: [night_only, battlements_only]
+  }
+}
+
+actor Claudius {
+  name: 'King Claudius'
+  description: 'Current King of Denmark, Hamlet\'s uncle and stepfather'
+  
+  archetypes: [usurper, king, manipulator]
+  temperament: [ambitious, calculating, guilty]
+  
+  movement {
+    style: regal
+    presence: commanding
+  }
+}
+
+monologue ToBeOrNotToBe {
+  Hamlet: """
+    To be, or not to be, that is the question:
+    Whether 'tis nobler in the mind to suffer
+    The slings and arrows of outrageous fortune,
+    Or to take Arms against a Sea of troubles...
+  """
+}
+
+dialogue GhostReveal {
+  Ghost: 'I am thy father\'s spirit'
+  Hamlet: 'O God!'
+  Ghost: 'Doomed for a certain term to walk the night'
+  
+  Ghost.approaches(Hamlet)
+  
+  Ghost: """
+    Murder most foul, as in the best it is,
+    But this most foul, strange, and unnatural.
+  """
+}
+
+scene GhostOnBattlements in space Elsinore.battlements {
+  atmosphere {
+    lighting: night
+    sound: [wind_howling, distant_bells]
+    temperature: freezing
+  }
+  
+  actions {
+    Ghost.appears()
+    Ghost.approachesSlowly(Hamlet)
+    GhostReveal()
+  }
+}
+
+scene ConfrontationScene in space Elsinore.throne_room {
+  atmosphere {
+    lighting: formal
+    sound: [court_murmurs, tense_silence]
+    temperature: warm
+  }
+  
+  actions {
+    Hamlet.confrontsGertrude()
+    Ghost.appears()
+    Hamlet.monologue("""
+      Do you see nothing there?
+      Do you behold nothing?
+      Look how it steals away!
+    """)
+  }
+}
+
+scene PrayerScene in space Elsinore.chapel {
+  atmosphere {
+    lighting: dim
+    sound: [distant_hymns, echoing_footsteps]
+    temperature: cool
+  }
+  
+  actions {
+    Claudius.kneels()
+    Hamlet.observes()
+    Hamlet.monologue("""
+      Now might I do it pat, now he is praying...
+      And now I'll do't. And so he goes to heaven,
+      And so am I revenged.
+    """)
+  }
+}
+
+sequence OpeningNight {
+
+  scene GhostOnBattlements
+  
+  scene AfterGhost
+
+  scene ConfrontationScene
+
+  scene PrayerScene
+}
+
+experience Hamlet {
+  setup {
+    time: night
+    location: Elsinore
+  }
+  
+  trigger OpeningNight
+  
+  branches {
+    "Follow the Ghost" {
+      requires(Hamlet.courage > fear)
+      trigger ghost_revelation
+    }
+    "Resist Following" {
+      trigger missed_truth
+    }
+  }
+}

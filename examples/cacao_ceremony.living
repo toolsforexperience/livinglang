@@ -1,0 +1,188 @@
+space CeremonySpace {
+  atmosphere {
+    lighting: warm_candlelight
+    sound: gentle_vibrations
+    incense: copal 
+  }
+  
+  zones {
+    circle {
+      shape: Circle(center, 4 meters)
+      seating: cushions
+      atmosphere: sacred
+    }
+    altar {
+      location: north
+      lighting: focused
+      atmosphere: reverent
+    }
+    preparation_area {
+      lighting: soft
+      atmosphere: focused
+      activity: brewing
+    }
+  }
+
+  objects {
+    cacao_vessel {
+      material: ceremonial_clay
+      contents: {
+        cacao: pure_ceremonial
+        temperature: drinking_warm
+        infusions: [rose, cardamom]
+      }
+    }
+    
+    altar_items {
+      crystals: [selenite, rose_quartz]
+      offerings: [flowers, feathers]
+      directions: [fire, water, air, earth]
+    }
+  }
+}
+
+actor Facilitator {
+  name: 'Maria'
+  description: 'Experienced cacao ceremonialist and energy worker'
+  
+  archetypes: [guide, healer, wisdom_keeper]
+  temperament: [grounded, compassionate, intuitive]
+}
+
+actor Assistant {
+  name: 'Luna'
+  description: 'Ceremony assistant and space holder'
+  
+  archetypes: [supporter, nurturer, protector]
+  temperament: [graceful, serene]
+}
+
+participant_group Circle {
+  size: 8..12
+  formation: circular
+  
+  interactions {
+    sharing: sequential
+    movement: synchronized_breathing
+  }
+}
+
+monologue OpeningInvocation {
+  Facilitator: """
+    Welcome to this sacred space
+    Where heart meets spirit in embrace
+    As cacao flows through mind and soul
+    We gather here to become whole...
+  """
+}
+
+dialogue CacaoBlessing {
+  Facilitator: 'We honor the spirit of cacao'
+  Assistant: 'Ancient medicine of the heart'
+  Facilitator: 'Opening pathways to the divine'
+  
+  Facilitator.lifts(cacao_vessel)
+  
+  Facilitator: """
+    Sacred cacao, we invite your wisdom
+    To flow through us and guide our journey
+  """
+}
+
+scene OpeningCeremony in space CeremonySpace.circle {
+  atmosphere {
+    lighting: dim
+    sound: [singing_bowls, rain_stick]
+    temperature: warm
+  }
+  
+  actions {
+    Facilitator.lights(sage)
+    Facilitator.cleanse_space()
+    OpeningInvocation()
+  }
+}
+
+scene CacaoSharing in space CeremonySpace.circle {
+  atmosphere {
+    lighting: candlelight
+    sound: [heart_drum, gentle_chimes]
+    temperature: cozy
+  }
+  
+  actions {
+    Assistant.prepare_cacao()
+    CacaoBlessing()
+    Facilitator.serve_cacao(to: participants)
+    Assistant.support_serving()
+  }
+}
+
+scene JourneySpace in space CeremonySpace.circle {
+  atmosphere {
+    lighting: minimal
+    sound: [shamanic_drums, medicine_songs]
+    temperature: grounded
+  }
+  
+  actions {
+    Facilitator.guide_meditation()
+    Assistant.hold_space()
+    Facilitator.lead_journey()
+  }
+}
+
+scene Integration in space CeremonySpace.circle {
+  atmosphere {
+    lighting: brightening
+    sound: [gentle_music, nature_sounds]
+    temperature: balanced
+  }
+  
+  actions {
+    Facilitator.ground_energy()
+    Assistant.offer_water()
+    Facilitator.facilitate_sharing()
+  }
+}
+
+sequence CeremonyFlow {
+  scene OpeningCeremony {
+    duration: 30.minutes
+  }
+  
+  scene CacaoSharing {
+    duration: 30.minutes
+  }
+  
+  scene JourneySpace {
+    duration: 90.minutes
+  }
+  
+  scene Integration {
+    duration: 40.minutes
+  }
+}
+
+experience CacaoCeremony {
+
+  total_duration: 3.hours
+
+  setup {
+    time: evening
+    location: CeremonySpace
+    participants: 12.maximum
+  }
+  
+  trigger CeremonyFlow
+  
+  branches {
+    "Deep Journey" {
+      requires(participants.openness > threshold)
+      trigger extended_meditation
+    }
+    "Gentle Journey" {
+      trigger soft_landing
+    }
+  }
+} 

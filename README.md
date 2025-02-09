@@ -18,157 +18,73 @@ A program written in LivingLang is a story to be executed and experienced by hum
 🎭 **Storylines**
 - Scene composition and management
 - Actor character and behavior
-- Timing and cue
-
-🔄 **Reactive Systems**
-- Event-driven architecture
-- State management
-- Real-time adaptation
-
-🧠 **AI Integration**
-- Contextual completions
-- Behavioral adaptation
-- Dynamic content generation
 
 ## Quick Start
 
+**Requirements**
+- Node.js v23 or higher
+
+1. Install the extension from VS Code marketplace
+2. Create a new file with `.living` extension
+3. Here's a minimal example that demonstrates core concepts:
+
 ```ts
-space Elsinore {
+space CoffeeShop {
   atmosphere {
-    lighting: ambient("cold")
-    sound: background("wind_battlements")
-    fog: dense 
+    lighting: warm
+    sound: cafe_ambience
   }
   
   zones {
-    battlements {
-      height: elevated
-      exposure: extreme
-    }
-    throne_room {
-      lighting: formal
-      atmosphere: oppressive
-    }
-    chapel {
-      lighting: dim
-      atmosphere: sacred
+    counter {
+      lighting: bright
+      activity: ordering
     }
   }
 }
 
-actor Hamlet {
-  name: "Prince Hamlet"
-  description: "Prince of Denmark, melancholic, philosophical"
+actor Barista {
+  name: 'Alex'
+  description: 'Friendly coffee shop barista'
   
-  archetypes: [prince, mourner, philosopher]
-  temperament: [melancholic, intelligent, conflicted]
-  
-  state: {
-    grief: high
-    suspicion: growing
-    madness: potential
+  behavior {
+    style: welcoming
+    location: counter
   }
 }
 
-actor Ghost {
-  name: "Ghost of King Hamlet"
-  description: "Former King of Denmark, Hamlet's father"
-  
-  archetypes: [spirit, king, accuser]
-  appearance: [armored, ethereal]
-  
-  movement: {
-    style: ethereal
-    pattern: deliberate
-    constraints: [night_only, battlements_only]
-  }
-}
-
-monologue toBeOrNotToBe {
-  Hamlet: """
-    To be, or not to be, that is the question:
-    Whether 'tis nobler in the mind to suffer
-    The slings and arrows of outrageous fortune,
-    Or to take Arms against a Sea of troubles...
-  """
-}
-
-dialogue ghostReveal {
-  Ghost: "I am thy father's spirit"
-  Hamlet: "O God!"
-  Ghost: "Doomed for a certain term to walk the night"
-  
-  Ghost.approaches(Hamlet)
-  
-  Ghost: """
-    Murder most foul, as in the best it is,
-    But this most foul, strange, and unnatural.
-  """
-}
-
-scene GhostOnBattlements in space Elsinore.battlements {
-  atmosphere {
-    lighting: night
-    sound: [wind_howling, distant_bells]
-    temperature: freezing
-  }
-  
+scene WelcomeCustomer in space CoffeeShop.counter {
   actions {
-    Ghost.appears()
-    Ghost.approachesSlowly(Hamlet)
-    ghostReveal
+    Barista.greet()
+    Barista.takeOrder()
   }
 }
 
-sequence OpeningNight {
-  scene GuardWatch {
-    duration: 10.minutes
-    atmosphere.buildTension()
-    Ghost.appearAndVanish(times: 2)
-  }
-  
-  scene GhostOnBattlements
-  
-  scene AfterGhost {
-    Hamlet.state.suspicion = maximum
-    trigger conspiracy_awareness
-  }
-}
-
-experience Hamlet {
+experience CoffeeMorning {
   setup {
-    time = night
-    location = Elsinore
-    political_tension = high
+    time: morning
+    location: CoffeeShop
   }
   
-  trigger OpeningNight
-  
-  branches {
-    "Follow the Ghost" {
-      requires(Hamlet.courage > fear)
-      trigger ghost_revelation
-    }
-    "Resist Following" {
-      trigger missed_truth
-    }
-  }
+  trigger WelcomeCustomer
 }
 ```
+
+This simple example shows the main concepts: spaces, actors, scenes and experiences. For more complex examples, see our examples directory.
 
 ## Core Concepts
 
 ### Spaces
-Spaces in LivingLang are reactive environments that respond to audience presence and story progression:
+Spaces are reactive environments that respond to audience presence and story progression:
 
 ```ts
 space Library {
   zones {
-    reading_area = Circle(center, 5 meters)
-    stacks = Grid(5 by 3 meters)
+    reading_area: Circle(center, 5 meters)
+    stacks: Grid(5 by 3 meters)
   }
 
-  atmosphere = reactive {
+  atmosphere: reactive {
     match audience.activity {
       case Exploring => mysterious
       case Reading => peaceful
@@ -179,14 +95,14 @@ space Library {
 ```
 
 ### Actors
-Actors are people following a script, that can interact with the audience and space:
+Actors are people following a script that can interact with the audience and space:
 
 ```ts
 actor Guide {
   behavior: FlowField {
     attract: audience.centers
     avoid: obstacles
-    style: "natural"
+    style: natural
   }
 
   interaction {
@@ -198,7 +114,8 @@ actor Guide {
 ```
 
 ### Sequences
-Create complex, branching narratives that respond to audience behavior:
+Sequences are a way to structure the story. They can be triggered by events or conditions.
+They are composed of scenes and can have branches.
 
 ```ts
 sequence MainStory {
@@ -212,36 +129,6 @@ sequence MainStory {
       when audience.cautious
       leads_to investigation
     }
-  }
-}
-```
-
-## Advanced Features
-
-### AI Completions
-LivingLang intends to integrate with AI to generate dynamic content and behaviors, where the details of the script are not fully defined, for variations or emergence.
-
-```ts
-actor Character {
-  ai prompt {
-    role: "Victorian librarian with {secret}"
-    personality: generate(traits=3)
-    knowledge: align_with(story.theme)
-  }
-}
-```
-
-### State Management
-Complex state machines for managing experience flow:
-
-```ts
-state_machine Tension {
-  states = [calm, building, intense, release]
-  
-  transitions {
-    calm -> building when audience.engagement > 0.7
-    building -> intense via gradual(2.minutes)
-    intense -> release when story.climax_reached
   }
 }
 ```
