@@ -1,28 +1,8 @@
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { tokenTypesLegend, TokenTypes, TokenType } from '../../shared/src/tokenTypes';
 
-// Language keywords and variables
-const KEYWORDS = new Set([
-    'experience', 'space', 'sequence', 'scene', 'actor',
-    'zones', 'actions', 'behavior', 'objects', 'dialogue', 'monologue'
-]);
-
-// Keywords that should be followed by a name
-const NAME_KEYWORDS = new Set([
-    'actor', 'space', 'scene', 'experience', 'sequence'
-]);
-
-// Parser states
-type ParserState = 'default' | 'property' | 'value' | 'string' | 'array' | 'comment';
-
-const ParserState = {
-    Default: 'default' as ParserState,
-    Property: 'property' as ParserState,
-    Value: 'value' as ParserState,
-    String: 'string' as ParserState,
-    Array: 'array' as ParserState,
-    Comment: 'comment' as ParserState
-};
+// Types and Interfaces
+// ===================
 
 interface Token {
     text: string;
@@ -32,37 +12,84 @@ interface Token {
     length: number;
 }
 
+interface ParserPosition {
+    pos: number;
+    line: number;
+    col: number;
+}
+
+type ParserState = 'default' | 'property' | 'value' | 'string' | 'array' | 'comment';
+
+// Constants and Configuration
+// =========================
+
+const ParserState = {
+    Default: 'default' as ParserState,
+    Property: 'property' as ParserState,
+    Value: 'value' as ParserState,
+    String: 'string' as ParserState,
+    Array: 'array' as ParserState,
+    Comment: 'comment' as ParserState
+} as const;
+
+const KEYWORDS = new Set([
+    'experience', 'space', 'sequence', 'scene', 'actor',
+    'zones', 'actions', 'behavior', 'objects', 'dialogue', 'monologue'
+]);
+
+const NAME_KEYWORDS = new Set([
+    'actor', 'space', 'scene', 'experience', 'sequence'
+]);
+
+// Utility Functions
+// ===============
+
+const isWhitespace = (char: string): boolean => /\s/.test(char);
+const isWordChar = (char: string): boolean => /[a-zA-Z0-9_-]/.test(char);
+const isQuote = (char: string): boolean => char === '"' || char === "'";
+
+// Parser Class
+// ===========
+
 class Parser {
     private text: string;
     private tokens: Token[] = [];
-    private pos = 0;
-    private line = 0;
-    private col = 0;
-    private state = ParserState.Default;
-    private currentToken = '';
-    private blockLevel = 0;
+    private position: ParserPosition;
+    private state: ParserState;
+    private currentToken: string;
+    private blockLevel: number;
 
     constructor(document: TextDocument) {
         this.text = document.getText();
+        this.position = { pos: 0, line: 0, col: 0 };
+        this.state = ParserState.Default;
+        this.currentToken = '';
+        this.blockLevel = 0;
     }
 
+    // Position and Character Management
+    // -------------------------------
+
     private get currentChar(): string {
-        return this.pos < this.text.length ? this.text[this.pos] : '';
+        return this.position.pos < this.text.length ? this.text[this.position.pos] : '';
     }
 
     private get nextChar(): string {
-        return this.pos + 1 < this.text.length ? this.text[this.pos + 1] : '';
+        return this.position.pos + 1 < this.text.length ? this.text[this.position.pos + 1] : '';
     }
 
     private advance(): void {
         if (this.currentChar === '\n') {
-            this.line++;
-            this.col = 0;
+            this.position.line++;
+            this.position.col = 0;
         } else {
-            this.col++;
+            this.position.col++;
         }
-        this.pos++;
+        this.position.pos++;
     }
+
+    // Token Management
+    // ---------------
 
     private addToken(text: string, type: TokenType, line: number, col: number): void {
         const typeIndex = tokenTypesLegend.get(type);
@@ -71,7 +98,6 @@ class Parser {
             return;
         }
 
-        // Keep the token as a single unit with its full length
         this.tokens.push({
             text,
             type: typeIndex,
@@ -81,292 +107,313 @@ class Parser {
         });
     }
 
+    // Main Parsing Logic
+    // ----------------
+
     parse(): Token[] {
-        this.state = ParserState.Default;
-        
-        while (this.pos < this.text.length) {
-            const state = this.state;
-            switch (state) {
+        while (this.position.pos < this.text.length) {
+            switch (this.state) {
                 case ParserState.Default:
                     this.parseDefault();
                     break;
-                    
                 case ParserState.Property:
                     this.parseProperty();
                     break;
-                    
                 case ParserState.Value:
                     this.parseValue();
                     break;
-                    
                 case ParserState.String:
                     this.parseString();
                     break;
-                    
                 case ParserState.Array:
                     this.parseArray();
                     break;
-                    
                 case ParserState.Comment:
                     this.parseComment();
                     break;
             }
         }
-        
         return this.tokens;
     }
 
+    // State-Specific Parsing
+    // --------------------
+
     private parseDefault(): void {
-        // Skip whitespace
-        if (/\s/.test(this.currentChar)) {
+        if (isWhitespace(this.currentChar)) {
             this.advance();
             return;
         }
 
-        // Handle comments
-        if (this.currentChar === '/' && this.nextChar === '/') {
+        if (this.isCommentStart()) {
             this.state = ParserState.Comment;
             return;
         }
 
-        // Handle strings (including multiline)
-        if (this.currentChar === '"' || this.currentChar === "'") {
-            // Check for triple quotes
-            if (this.currentChar === '"' && 
-                this.nextChar === '"' && 
-                this.pos + 2 < this.text.length && 
-                this.text[this.pos + 2] === '"') {
-                this.state = ParserState.String;
-                return;
-            }
+        if (this.isStringStart()) {
             this.state = ParserState.String;
             return;
         }
 
-        // Handle block delimiters
-        if (this.currentChar === '{') {
-            this.blockLevel++;
-            this.advance();
-            return;
-        }
-        if (this.currentChar === '}') {
-            this.blockLevel--;
-            this.advance();
+        if (this.handleBlockDelimiters()) {
             return;
         }
 
-        // Start reading word
-        if (/[a-zA-Z0-9_-]/.test(this.currentChar)) {
-            const startCol = this.col;
-            const startLine = this.line;
-            this.currentToken = '';
-            
-            while (this.pos < this.text.length && /[a-zA-Z0-9_-]/.test(this.currentChar)) {
-                this.currentToken += this.currentChar;
-                this.advance();
-            }
-
-            // Check if it's a property (followed by colon)
-            if (this.currentChar === ':') {
-                this.state = ParserState.Property;
-                this.addToken(this.currentToken, TokenTypes.Property, startLine, startCol);
-                this.advance(); // skip colon
-                return;
-            }
-
-            // Check if it's a keyword or property
-            const word = this.currentToken.toLowerCase();
-            if (KEYWORDS.has(word)) {
-                this.addToken(this.currentToken, TokenTypes.Keyword, startLine, startCol);
-            } else {
-                // Check if this is a name following a name keyword
-                const lastToken = this.tokens[this.tokens.length - 1];
-                if (lastToken && lastToken.type === tokenTypesLegend.get(TokenTypes.Keyword) && 
-                    NAME_KEYWORDS.has(lastToken.text.toLowerCase())) {
-                    this.addToken(this.currentToken, TokenTypes.Name, startLine, startCol);
-                } else if (!lastToken || lastToken.type !== tokenTypesLegend.get(TokenTypes.Keyword) || this.blockLevel > 0) {
-                    this.addToken(this.currentToken, TokenTypes.Property, startLine, startCol);
-                }
-            }
+        if (isWordChar(this.currentChar)) {
+            this.handleWord();
             return;
         }
 
         this.advance();
     }
 
-    private parseProperty(): void {
-        // Skip whitespace after property
-        if (/\s/.test(this.currentChar)) {
+    private isCommentStart(): boolean {
+        return this.currentChar === '/' && this.nextChar === '/';
+    }
+
+    private isStringStart(): boolean {
+        const isTripleQuote = this.currentChar === '"' && 
+            this.nextChar === '"' && 
+            this.position.pos + 2 < this.text.length && 
+            this.text[this.position.pos + 2] === '"';
+        return isQuote(this.currentChar) || isTripleQuote;
+    }
+
+    private handleBlockDelimiters(): boolean {
+        if (this.currentChar === '{') {
+            this.blockLevel++;
+            this.advance();
+            return true;
+        }
+        if (this.currentChar === '}') {
+            this.blockLevel--;
+            this.advance();
+            return true;
+        }
+        return false;
+    }
+
+    private handleWord(): void {
+        const startCol = this.position.col;
+        const startLine = this.position.line;
+        this.currentToken = '';
+        
+        while (this.position.pos < this.text.length && isWordChar(this.currentChar)) {
+            this.currentToken += this.currentChar;
+            this.advance();
+        }
+
+        if (this.currentChar === ':') {
+            this.state = ParserState.Property;
+            this.addToken(this.currentToken, TokenTypes.Property, startLine, startCol);
             this.advance();
             return;
         }
 
-        // Start value parsing
+        this.categorizeWord(startLine, startCol);
+    }
+
+    private categorizeWord(startLine: number, startCol: number): void {
+        const word = this.currentToken.toLowerCase();
+        if (KEYWORDS.has(word)) {
+            this.addToken(this.currentToken, TokenTypes.Keyword, startLine, startCol);
+            return;
+        }
+
+        const lastToken = this.tokens[this.tokens.length - 1];
+        if (this.isNameToken(lastToken)) {
+            this.addToken(this.currentToken, TokenTypes.Name, startLine, startCol);
+        } else {
+            this.addToken(this.currentToken, TokenTypes.Property, startLine, startCol);
+        }
+    }
+
+    private isNameToken(lastToken: Token | undefined): boolean {
+        if (!lastToken) {
+            return false;
+        }
+        return lastToken.type === tokenTypesLegend.get(TokenTypes.Keyword) && 
+            NAME_KEYWORDS.has(lastToken.text.toLowerCase());
+    }
+
+    private parseProperty(): void {
+        if (isWhitespace(this.currentChar)) {
+            this.advance();
+            return;
+        }
         this.state = ParserState.Value;
     }
 
     private parseValue(): void {
-        if (/\s/.test(this.currentChar)) {
+        if (isWhitespace(this.currentChar)) {
             this.advance();
             return;
         }
 
-        const startCol = this.col;
-        const startLine = this.line;
+        const startCol = this.position.col;
+        const startLine = this.position.line;
 
-        // Handle array values
         if (this.currentChar === '[') {
             this.state = ParserState.Array;
             this.advance();
             return;
         }
 
-        // Handle string values
-        if (this.currentChar === '"' || this.currentChar === "'") {
+        if (isQuote(this.currentChar)) {
             this.state = ParserState.String;
             return;
         }
 
-        // Handle simple values
-        if (/[a-zA-Z0-9_-]/.test(this.currentChar)) {
-            let value = '';
-            while (this.pos < this.text.length && /[a-zA-Z0-9_-]/.test(this.currentChar)) {
-                value += this.currentChar;
-                this.advance();
-            }
-            this.addToken(value, TokenTypes.Value, startLine, startCol);
-            this.state = ParserState.Default;
+        if (isWordChar(this.currentChar)) {
+            this.parseSimpleValue(startLine, startCol);
             return;
         }
 
+        this.state = ParserState.Default;
+    }
+
+    private parseSimpleValue(startLine: number, startCol: number): void {
+        let value = '';
+        while (this.position.pos < this.text.length && isWordChar(this.currentChar)) {
+            value += this.currentChar;
+            this.advance();
+        }
+        this.addToken(value, TokenTypes.Value, startLine, startCol);
         this.state = ParserState.Default;
     }
 
     private parseString(): void {
-        const startCol = this.col;
-        const startLine = this.line;
-        let string = '';
+        const startCol = this.position.col;
+        const startLine = this.position.line;
         
-        // Check for triple quotes
-        const isTripleQuote = 
-            this.currentChar === '"' && 
+        const isTripleQuote = this.currentChar === '"' && 
             this.nextChar === '"' && 
-            this.pos + 2 < this.text.length && 
-            this.text[this.pos + 2] === '"';
+            this.position.pos + 2 < this.text.length && 
+            this.text[this.position.pos + 2] === '"';
             
         if (isTripleQuote) {
-            // Record the starting position of the entire string, including quotes
-            const stringStartPos = this.pos;
-            
-            // Advance past opening quotes
-            this.advance(); // first quote
-            this.advance(); // second quote
-            this.advance(); // third quote
-            
-            // Find closing quotes
-            let foundClosingQuotes = false;
-            
-            while (this.pos < this.text.length) {
-                if (this.currentChar === '"' && 
-                    this.nextChar === '"' && 
-                    this.pos + 2 < this.text.length && 
-                    this.text[this.pos + 2] === '"') {
-                    // Advance to end of closing quotes
-                    this.advance(); // first quote
-                    this.advance(); // second quote
-                    this.advance(); // third quote
-                    foundClosingQuotes = true;
-                    break;
-                }
-                this.advance();
-            }
-            
-            // Extract the exact string from source, including all whitespace and quotes
-            const stringEndPos = foundClosingQuotes ? this.pos : this.text.length;
-            string = this.text.substring(stringStartPos, stringEndPos);
-            
+            this.parseTripleQuotedString(startLine, startCol);
         } else {
-            // Regular string handling
-            const quote = this.currentChar;
-            string = quote;
-            
-            this.advance(); // Skip opening quote
-            
-            while (this.pos < this.text.length) {
-                // Handle escaped quotes
-                if (this.currentChar === '\\' && this.nextChar === quote) {
-                    string += this.currentChar; // Add the backslash
-                    this.advance();
-                    string += this.currentChar; // Add the escaped quote
-                    this.advance();
-                    continue;
-                }
-                
-                if (this.currentChar === quote) {
-                    string += quote;
-                    this.advance();
-                    break;
-                }
-                
-                string += this.currentChar;
-                this.advance();
-            }
+            this.parseSingleQuotedString(startLine, startCol);
         }
         
-        this.addToken(string, TokenTypes.String, startLine, startCol);
         this.state = ParserState.Default;
     }
 
+    private parseTripleQuotedString(startLine: number, startCol: number): void {
+        const stringStartPos = this.position.pos;
+        
+        // Skip opening quotes
+        this.advance();
+        this.advance();
+        this.advance();
+        
+        while (this.position.pos < this.text.length) {
+            if (this.currentChar === '"' && 
+                this.nextChar === '"' && 
+                this.position.pos + 2 < this.text.length && 
+                this.text[this.position.pos + 2] === '"') {
+                this.advance();
+                this.advance();
+                this.advance();
+                break;
+            }
+            this.advance();
+        }
+        
+        const string = this.text.substring(stringStartPos, this.position.pos);
+        this.addToken(string, TokenTypes.String, startLine, startCol);
+    }
+
+    private parseSingleQuotedString(startLine: number, startCol: number): void {
+        const quote = this.currentChar;
+        let string = quote;
+        
+        this.advance();
+        
+        while (this.position.pos < this.text.length) {
+            if (this.currentChar === '\\' && this.nextChar === quote) {
+                string += this.currentChar + this.nextChar;
+                this.advance();
+                this.advance();
+                continue;
+            }
+            
+            if (this.currentChar === quote) {
+                string += quote;
+                this.advance();
+                break;
+            }
+            
+            string += this.currentChar;
+            this.advance();
+        }
+        
+        this.addToken(string, TokenTypes.String, startLine, startCol);
+    }
+
     private parseArray(): void {
-        if (/\s/.test(this.currentChar)) {
+        if (isWhitespace(this.currentChar)) {
             this.advance();
             return;
         }
 
-        // End of array
         if (this.currentChar === ']') {
             this.advance();
             this.state = ParserState.Default;
             return;
         }
 
-        // Skip commas
         if (this.currentChar === ',') {
             this.advance();
             return;
         }
 
-        // Parse array value
-        if (/[a-zA-Z0-9_-]/.test(this.currentChar)) {
-            const startCol = this.col;
-            const startLine = this.line;
-            let value = '';
-            
-            while (this.pos < this.text.length && /[a-zA-Z0-9_-]/.test(this.currentChar)) {
-                value += this.currentChar;
-                this.advance();
-            }
-            
-            this.addToken(value, TokenTypes.Value, startLine, startCol);
+        if (isWordChar(this.currentChar)) {
+            this.parseArrayValue();
             return;
         }
 
         this.advance();
     }
 
+    private parseArrayValue(): void {
+        const startCol = this.position.col;
+        const startLine = this.position.line;
+        let value = '';
+        
+        while (this.position.pos < this.text.length && isWordChar(this.currentChar)) {
+            value += this.currentChar;
+            this.advance();
+        }
+        
+        this.addToken(value, TokenTypes.Value, startLine, startCol);
+    }
+
     private parseComment(): void {
-        while (this.pos < this.text.length && this.currentChar !== '\n') {
+        while (this.position.pos < this.text.length && this.currentChar !== '\n') {
             this.advance();
         }
         this.state = ParserState.Default;
     }
 }
 
+// Main Export Function
+// ==================
+
+/**
+ * Processes a document and returns semantic tokens in the format expected by the LSP.
+ * @param document The text document to process
+ * @returns An array of numbers representing the semantic tokens
+ */
 export function processSemanticTokens(document: TextDocument): number[] {
     const parser = new Parser(document);
     const tokens = parser.parse();
     
-    // Convert to semantic token format
+    return convertTokensToLSPFormat(tokens);
+}
+
+function convertTokensToLSPFormat(tokens: Token[]): number[] {
     const result: number[] = [];
     let prevLine = 0;
     let prevChar = 0;
