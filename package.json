@@ -62,28 +62,9 @@
 		],
 		"semanticTokenTypes": [
 			{
-				"id": "keyword",
-				"superType": "keyword"
-			},
-			{
-				"id": "function",
-				"superType": "method"
-			},
-			{
-				"id": "string",
-				"superType": "string"
-			},
-			{
-				"id": "property",
-				"superType": "property"
-			},
-			{
-				"id": "value",
-				"superType": "variable"
-			},
-			{
 				"id": "name",
-				"superType": "class"
+				"superType": "type",
+				"description": "Style for entity names"
 			}
 		],
 		"semanticTokenStyleDefaults": {
@@ -91,7 +72,7 @@
 				"foreground": "#569CD6",
 				"bold": true
 			},
-			"*.method": {
+			"*.function": {
 				"foreground": "#C586C0"
 			},
 			"*.string": {
@@ -100,10 +81,10 @@
 			"*.property": {
 				"foreground": "#9CDCFE"
 			},
-			"*.variable": {
+			"*.value": {
 				"foreground": "#DCDCAA"
 			},
-			"*.class": {
+			"name": {
 				"foreground": "#4EC9B0",
 				"bold": true
 			}

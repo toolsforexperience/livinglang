@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { tokenTypes, processSemanticTokens } from '../server/src/tokenProvider';
+import { processSemanticTokens } from '../server/src/tokenProvider';
+import { tokenTypes } from '../shared/src/tokenTypes';
 
 describe('LivingLang Token Provider', () => {
     // Helper to create a test document and get tokens

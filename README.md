@@ -133,6 +133,35 @@ sequence MainStory {
 }
 ```
 
+### Identities
+Identities are a way to keep track of the audience's progression and meaning within the story.
+
+```ts
+identity: {
+  progression_milestones: [Milestone]
+  meaning_milestones: [Milestone]
+}
+```
+
+### Memory
+Memory is a way to keep track of the audience's progression and meaning within the story.
+
+```ts
+story_memory {
+  participants: [Person]
+  history: Timeline {
+    events: [SharedExperience]
+    milestones: [RelationshipMilestone]
+    emotions: EmotionalTrajectory
+  }
+  trust_level: DynamicMetric
+  comfort_zones: AdaptiveMap
+}
+```
+
+
+
+
 ## Roadmap
 
 - [ ] Implement the core language features in the language server

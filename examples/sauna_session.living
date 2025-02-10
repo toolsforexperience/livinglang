@@ -1,0 +1,113 @@
+space Sauna {
+  atmosphere {
+    lighting: dim
+    sound: nature_ambience
+    temperature: hot
+    humidity: high
+  }
+  
+  zones {
+    changing_room {
+      lighting: warm
+      temperature: normal
+      activity: preparation
+    }
+    
+    main_sauna {
+      lighting: very_dim
+      temperature: very_hot
+      humidity: very_high
+      activity: relaxation
+    }
+    
+    cool_down {
+      lighting: natural
+      temperature: cool
+      activity: recovery
+    }
+  }
+}
+
+actor SaunaGuide {
+  name: 'David'
+  description: 'Experienced sauna master who guides the ritual'
+  
+  behavior {
+    style: excited
+  }
+}
+
+scene WelcomeGuests in space Sauna.changing_room {
+  actions {
+    SaunaGuide.greet()
+    SaunaGuide.explain_ritual()
+    SaunaGuide.provide_towels()
+  }
+}
+
+scene SaunaRound in space Sauna.main_sauna {
+  atmosphere: evolving {
+    start: gentle_heat
+    middle: intense_heat
+    end: peak_heat
+  }
+  
+  actions {
+    SaunaGuide.pour_water()
+    SaunaGuide.wave_towel()
+    SaunaGuide.guide_breathing()
+  }
+}
+
+scene CoolDown in space Sauna.cool_down {
+  actions {
+    SaunaGuide.offer_water()
+    SaunaGuide.guide_recovery()
+  }
+}
+
+sequence SaunaRitual {
+  branch {
+    path gentle {
+      when audience.heat_tolerance == low
+      rounds: 2
+      duration: 8.minutes
+    }
+    
+    path standard {
+      when audience.heat_tolerance == medium
+      rounds: 3
+      duration: 12.minutes
+    }
+    
+    path intense {
+      when audience.heat_tolerance == high
+      rounds: 4
+      duration: 15.minutes
+    }
+  }
+}
+
+experience SaunaSession {
+  setup {
+    time: evening
+    location: Sauna
+    max_participants: 8
+  }
+  
+  flow {
+    1: WelcomeGuests
+    2: SaunaRitual
+    3: CoolDown
+  }
+  
+  story_memory {
+    participants: track_comfort_levels
+    history: Timeline {
+      events: [RoundCompletion]
+      milestones: [HeatTolerance]
+      emotions: RelaxationLevel
+    }
+    comfort_zones: AdaptiveHeatMap
+  }
+} 

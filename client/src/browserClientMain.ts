@@ -2,6 +2,7 @@ import { ExtensionContext, Uri, window, SemanticTokens, workspace, TextDocument,
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { LanguageClient } from 'vscode-languageclient/browser';
 import * as vscode from 'vscode';
+import { tokenTypes, TokenTypes } from '../../shared/src/tokenTypes';
 
 let client: LanguageClient;
 let lastRequestTime = 0;
@@ -123,10 +124,18 @@ export async function activate(context: ExtensionContext) {
 		await client.start();
 		console.log(`Client started in ${Date.now() - startTime}ms`);
 
-		// Register semantic token provider
-		const tokenTypes = ['keyword', 'function', 'string', 'property', 'value', 'name'];
-		const tokenModifiers = [];
-		const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+		// Register semantic token provider with explicit token types
+		const legend = new vscode.SemanticTokensLegend(
+			[
+				TokenTypes.Keyword,
+				TokenTypes.Function,
+				TokenTypes.String,
+				TokenTypes.Property,
+				TokenTypes.Value,
+				TokenTypes.Name
+			],
+			[]
+		);
 
 		console.log('Registering semantic token provider with types:', tokenTypes);
 		console.log('Package.json semantic token styles should be applied from semanticTokenStyleDefaults');

@@ -1,17 +1,5 @@
 import { TextDocument } from 'vscode-languageserver-textdocument';
-
-// Token types
-export const tokenTypes = ['keyword', 'function', 'string', 'property', 'value', 'name'];
-export const tokenTypesLegend = new Map(tokenTypes.map((type, index) => [type, index]));
-
-enum TokenType {
-    Keyword = 0,
-    Function = 1,
-    String = 2,
-    Property = 3,
-    Value = 4,
-    Name = 5
-}
+import { tokenTypesLegend, TokenTypes, TokenType } from '../../shared/src/tokenTypes';
 
 // Language keywords and variables
 const KEYWORDS = new Set([
@@ -21,7 +9,7 @@ const KEYWORDS = new Set([
 
 // Keywords that should be followed by a name
 const NAME_KEYWORDS = new Set([
-    'actor', 'space', 'scene', 'experience'
+    'actor', 'space', 'scene', 'experience', 'sequence'
 ]);
 
 // Parser states
@@ -38,7 +26,7 @@ const ParserState = {
 
 interface Token {
     text: string;
-    type: TokenType;
+    type: number;
     line: number;
     character: number;
     length: number;
@@ -77,9 +65,14 @@ class Parser {
     }
 
     private addToken(text: string, type: TokenType, line: number, col: number): void {
+        const typeIndex = tokenTypesLegend.get(type);
+        if (typeIndex === undefined) {
+            console.error('Unknown token type:', type);
+            return;
+        }
         this.tokens.push({
             text,
-            type,
+            type: typeIndex,
             line,
             character: col,
             length: text.length
@@ -174,7 +167,7 @@ class Parser {
             // Check if it's a property (followed by colon)
             if (this.currentChar === ':') {
                 this.state = ParserState.Property;
-                this.addToken(this.currentToken, TokenType.Property, startLine, startCol);
+                this.addToken(this.currentToken, TokenTypes.Property, startLine, startCol);
                 this.advance(); // skip colon
                 return;
             }
@@ -182,15 +175,15 @@ class Parser {
             // Check if it's a keyword or property
             const word = this.currentToken.toLowerCase();
             if (KEYWORDS.has(word)) {
-                this.addToken(this.currentToken, TokenType.Keyword, startLine, startCol);
+                this.addToken(this.currentToken, TokenTypes.Keyword, startLine, startCol);
             } else {
                 // Check if this is a name following a name keyword
                 const lastToken = this.tokens[this.tokens.length - 1];
-                if (lastToken && lastToken.type === TokenType.Keyword && 
+                if (lastToken && lastToken.type === tokenTypesLegend.get(TokenTypes.Keyword) && 
                     NAME_KEYWORDS.has(lastToken.text.toLowerCase())) {
-                    this.addToken(this.currentToken, TokenType.Name, startLine, startCol);
-                } else if (!lastToken || lastToken.type !== TokenType.Keyword || this.blockLevel > 0) {
-                    this.addToken(this.currentToken, TokenType.Property, startLine, startCol);
+                    this.addToken(this.currentToken, TokenTypes.Name, startLine, startCol);
+                } else if (!lastToken || lastToken.type !== tokenTypesLegend.get(TokenTypes.Keyword) || this.blockLevel > 0) {
+                    this.addToken(this.currentToken, TokenTypes.Property, startLine, startCol);
                 }
             }
             return;
@@ -239,7 +232,7 @@ class Parser {
                 value += this.currentChar;
                 this.advance();
             }
-            this.addToken(value, TokenType.Value, startLine, startCol);
+            this.addToken(value, TokenTypes.Value, startLine, startCol);
             this.state = ParserState.Default;
             return;
         }
@@ -311,7 +304,7 @@ class Parser {
             }
         }
         
-        this.addToken(string, TokenType.String, startLine, startCol);
+        this.addToken(string, TokenTypes.String, startLine, startCol);
         this.state = ParserState.Default;
     }
 
@@ -345,7 +338,7 @@ class Parser {
                 this.advance();
             }
             
-            this.addToken(value, TokenType.Value, startLine, startCol);
+            this.addToken(value, TokenTypes.Value, startLine, startCol);
             return;
         }
 
