@@ -67,6 +67,17 @@
 				"description": "Style for entity names"
 			}
 		],
+		"semanticTokenScopes": [
+			{
+				"scopes": {
+					"string": ["string.quoted.double", "string.quoted.triple"],
+					"keyword": ["keyword.control"],
+					"property": ["variable.other.property"],
+					"value": ["constant.other"],
+					"name": ["entity.name"]
+				}
+			}
+		],
 		"semanticTokenStyleDefaults": {
 			"*.keyword": {
 				"foreground": "#569CD6",

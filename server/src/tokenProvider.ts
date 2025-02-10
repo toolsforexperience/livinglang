@@ -70,6 +70,8 @@ class Parser {
             console.error('Unknown token type:', type);
             return;
         }
+
+        // Keep the token as a single unit with its full length
         this.tokens.push({
             text,
             type: typeIndex,
@@ -253,29 +255,36 @@ class Parser {
             this.text[this.pos + 2] === '"';
             
         if (isTripleQuote) {
-            // Add opening triple quotes
-            string = '"""';
+            // Record the starting position of the entire string, including quotes
+            const stringStartPos = this.pos;
+            
+            // Advance past opening quotes
             this.advance(); // first quote
             this.advance(); // second quote
             this.advance(); // third quote
             
+            // Find closing quotes
+            let foundClosingQuotes = false;
+            
             while (this.pos < this.text.length) {
-                // Check for end of multiline string
                 if (this.currentChar === '"' && 
                     this.nextChar === '"' && 
                     this.pos + 2 < this.text.length && 
                     this.text[this.pos + 2] === '"') {
-                    string += '"""';
+                    // Advance to end of closing quotes
                     this.advance(); // first quote
                     this.advance(); // second quote
                     this.advance(); // third quote
+                    foundClosingQuotes = true;
                     break;
                 }
-                
-                // Add the current character (including newlines)
-                string += this.currentChar;
                 this.advance();
             }
+            
+            // Extract the exact string from source, including all whitespace and quotes
+            const stringEndPos = foundClosingQuotes ? this.pos : this.text.length;
+            string = this.text.substring(stringStartPos, stringEndPos);
+            
         } else {
             // Regular string handling
             const quote = this.currentChar;

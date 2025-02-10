@@ -168,6 +168,21 @@ describe('LivingLang Token Provider', () => {
             ]);
         });
 
+        it('should handle multiline strings with whitespace', () => {
+            const tokens = getTokensForText(`
+                description: """
+                    This is a multiline string
+                    with indentation and
+                        different levels
+                    of whitespace
+                """
+            `);
+            assert.deepStrictEqual(tokens, [
+                { type: 'property', text: 'description' },
+                { type: 'string', text: '"""\n                    This is a multiline string\n                    with indentation and\n                        different levels\n                    of whitespace\n                """' }
+            ]);
+        });
+
         it('should identify array values', () => {
             const tokens = getTokensForText('colors: [red, green, blue]');
             assert.deepStrictEqual(tokens, [
