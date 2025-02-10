@@ -302,27 +302,62 @@ class Parser {
 
     private parseTripleQuotedString(startLine: number, startCol: number): void {
         const stringStartPos = this.position.pos;
+        let currentLineStartPos = stringStartPos;
+        let currentLineNumber = startLine;
+        
+        // Add opening quotes as first token
+        const openingQuotes = this.text.substring(stringStartPos, stringStartPos + 3);
+        this.addToken(openingQuotes, TokenTypes.String, startLine, startCol);
         
         // Skip opening quotes
         this.advance();
         this.advance();
         this.advance();
         
+        // Update start position for content
+        currentLineStartPos = this.position.pos;
+        
         while (this.position.pos < this.text.length) {
+            // Check for end of string
             if (this.currentChar === '"' && 
                 this.nextChar === '"' && 
                 this.position.pos + 2 < this.text.length && 
                 this.text[this.position.pos + 2] === '"') {
+                // Add the last line if there's content
+                if (this.position.pos > currentLineStartPos) {
+                    const lineText = this.text.substring(currentLineStartPos, this.position.pos);
+                    const lineStartCol = currentLineNumber === startLine ? startCol + 3 : 0;
+                    this.addToken(lineText, TokenTypes.String, currentLineNumber, lineStartCol);
+                }
+                
+                // Add the closing quotes as a separate token
+                const closingQuotePos = this.position.pos;
+                const closingQuotes = this.text.substring(closingQuotePos, closingQuotePos + 3);
+                this.addToken(closingQuotes, TokenTypes.String, currentLineNumber, this.position.col);
+                
+                // Advance past closing quotes
                 this.advance();
                 this.advance();
                 this.advance();
                 break;
             }
+
+            // Handle line breaks in multiline strings
+            if (this.currentChar === '\n') {
+                // Add the current line if there's content
+                if (this.position.pos > currentLineStartPos) {
+                    const lineText = this.text.substring(currentLineStartPos, this.position.pos);
+                    const lineStartCol = currentLineNumber === startLine ? startCol + 3 : 0;
+                    this.addToken(lineText, TokenTypes.String, currentLineNumber, lineStartCol);
+                }
+                this.advance();
+                currentLineStartPos = this.position.pos;
+                currentLineNumber++;
+                continue;
+            }
+
             this.advance();
         }
-        
-        const string = this.text.substring(stringStartPos, this.position.pos);
-        this.addToken(string, TokenTypes.String, startLine, startCol);
     }
 
     private parseSingleQuotedString(startLine: number, startCol: number): void {

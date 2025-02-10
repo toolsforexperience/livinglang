@@ -35,10 +35,10 @@ describe('LivingLang Token Provider', () => {
             const text = document.getText({
                 start: document.positionAt(startOffset),
                 end: document.positionAt(endOffset)
-            }).trim();
+            });
             
-            // Only add non-empty tokens
-            if (text) {
+            // Only add non-empty tokens or tokens that are just whitespace
+            if (text || /\s+/.test(text)) {
                 result.push({ type, text });
             }
         }
@@ -164,7 +164,13 @@ describe('LivingLang Token Provider', () => {
             assert.deepStrictEqual(tokens, [
                 { type: 'keyword', text: 'monologue' },
                 { type: 'property', text: 'Hamlet' },
-                { type: 'string', text: '"""\n                        To be, or not to be, that is the question:\n                        Whether \'tis nobler in the mind to suffer\n                        The slings and arrows of outrageous fortune,\n                        Or to take Arms against a Sea of troubles...\n                    """' }
+                { type: 'string', text: '"""' },
+                { type: 'string', text: '                        To be, or not to be, that is the question:' },
+                { type: 'string', text: '                        Whether \'tis nobler in the mind to suffer' },
+                { type: 'string', text: '                        The slings and arrows of outrageous fortune,' },
+                { type: 'string', text: '                        Or to take Arms against a Sea of troubles...' },
+                { type: 'string', text: '                    ' },
+                { type: 'string', text: '"""' }
             ]);
         });
 
@@ -179,7 +185,13 @@ describe('LivingLang Token Provider', () => {
             `);
             assert.deepStrictEqual(tokens, [
                 { type: 'property', text: 'description' },
-                { type: 'string', text: '"""\n                    This is a multiline string\n                    with indentation and\n                        different levels\n                    of whitespace\n                """' }
+                { type: 'string', text: '"""' },
+                { type: 'string', text: '                    This is a multiline string' },
+                { type: 'string', text: '                    with indentation and' },
+                { type: 'string', text: '                        different levels' },
+                { type: 'string', text: '                    of whitespace' },
+                { type: 'string', text: '                ' },
+                { type: 'string', text: '"""' }
             ]);
         });
 
