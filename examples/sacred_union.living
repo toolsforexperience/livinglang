@@ -1,0 +1,181 @@
+space SacredUnion {
+  atmosphere {
+    lighting: warm
+    sound: ambience
+  }
+  
+  zones {
+    meditation_area: Circle(center, 3.meters) {
+      lighting: soft
+      activity: connection
+    }
+  }
+  
+  /* DIAGRAM: SacredUnion Experience Flow
+   *
+   * ┌─────────────────────────────────────────────────────────────┐
+   * │                      SACRED UNION SPACE                      │
+   * │  ┌─────────────────────────────────────────────────────────┐ │
+   * │  │               MEDITATION AREA (CIRCLE)                   │ │
+   * │  │                                                         │ │
+   * │  │    ┌─────────┐           ┌─────────┐                    │ │
+   * │  │    │MASCULINE│◄──────────►│FEMININE │                    │ │
+   * │  │    └────┬────┘           └────┬────┘                    │ │
+   * │  │         │                     │                         │ │
+   * │  │         │      SEQUENCE       │                         │ │
+   * │  │         │    ┌───────────┐    │                         │ │
+   * │  │         └────► OPENING   ├────┘                         │ │
+   * │  │              └─────┬─────┘                              │ │
+   * │  │                    │                                    │ │
+   * │  │              ┌─────▼─────┐                              │ │
+   * │  │              │ UNIONFLOW │                              │ │
+   * │  │              └─────┬─────┘                              │ │
+   * │  │                    │                                    │ │
+   * │  │         ┌──────────┴──────────┐                         │ │
+   * │  │         │                     │                         │ │
+   * │  │    ┌────▼─────┐         ┌─────▼────┐                    │ │
+   * │  │    │ EYEGAZING│         │BLINDFOLD │                    │ │
+   * │  │    └────┬─────┘         │CONNECTION│                    │ │
+   * │  │         │               └─────┬────┘                    │ │
+   * │  │         │                     │                         │ │
+   * │  │         │               ┌─────▼────┐                    │ │
+   * │  │         └───────────────►   HEART  │                    │ │
+   * │  │                         │CONNECTION│                    │ │
+   * │  │                         └──────────┘                    │ │
+   * │  │                                                         │ │
+   * │  │                PROP: SILKBLINDFOLD                      │ │
+   * │  └─────────────────────────────────────────────────────────┘ │
+   * └─────────────────────────────────────────────────────────────┘
+   */
+}
+
+prop SilkBlindfold {
+  number: 2
+  material: organic_cotton
+  effect: inner_vision
+  charging: heart_energy
+}
+
+actor Masculine {
+  name: 'Partner One'
+  description: 'Embodying masculine energy'
+  
+  behavior {
+    style: grounded
+    location: meditation_area
+  }
+
+  interaction {
+    radius: 1.meter
+    on_approach: open_heart
+    on_engage: hold_space
+    on_blindfold_applied: offer_hand
+    on_blindfold_removed: first_sight
+  }
+}
+
+actor Feminine {
+  name: 'Partner Two'
+  description: 'Embodying feminine energy'
+  
+  behavior {
+    style: flowing
+    location: meditation_area
+  }
+
+  interaction {
+    radius: 1.meter
+    on_approach: receive
+    on_engage: deepen_presence
+    on_blindfold_applied: open_palms
+    on_blindfold_removed: shared_vision
+  }
+}
+
+scene Opening in space SacredUnion.meditation_area {
+  actions {
+    Masculine.ground()
+    Feminine.center()
+    space.adjust_atmosphere(peaceful)
+  }
+}
+
+scene EyeGazing in space SacredUnion.meditation_area {
+  actions {
+    Masculine.face(Feminine)
+    Feminine.face(Masculine)
+    space.dim_lights()
+  }
+}
+
+scene HeartConnection in space SacredUnion.meditation_area {
+  actions {
+    Masculine.touch_heart()
+    Feminine.touch_heart()
+    space.red_light()
+  }
+}
+
+scene BlindfoldConnection in space SacredUnion.meditation_area {
+  phase: deep_listening
+  requirements: SilkBlindfold.applied
+
+  actions {
+    Masculine.apply_blindfold()
+    Feminine.apply_blindfold()
+    space.enhance_senses(
+      audio: binaural_voices,
+      tactile: energy_currents
+    )
+  }
+
+  rules {
+    movement: constrained_to_energy_path
+    interaction_mode: tactile_only
+    revelation_trigger: mutual_breath_sync
+  }
+
+  transition_when: heartbeats_synchronized
+}
+
+sequence UnionFlow {
+  branch {
+    path deepening {
+      when participants.ready && SilkBlindfold.charged
+      leads_to EyeGazing
+      alternative_path: BlindfoldConnection
+    }
+    
+    path revelation {
+      when BlindfoldConnection.completed
+      leads_to HeartConnection
+      revelation_effect: aura_reveal
+    }
+  }
+}
+
+experience SacredUnion {
+  setup {
+    time: evening
+    location: SacredUnion
+    required_props: [SilkBlindfold]
+  }
+  
+  sequence {
+    Opening
+    UnionFlow
+    EyeGazing
+    HeartConnection
+    BlindfoldConnection
+
+  }
+
+  memory {
+    track: [
+      ...existing tracks,
+      blindfold_duration,
+      energy_resonance,
+      tactile_accuracy
+    ]
+  }
+} 

@@ -1,0 +1,165 @@
+space TempleOfMovement {
+  atmosphere {
+    lighting: reactive {
+      base: dim_amber
+      intensity: match dance_energy {
+        0..30: pulsing(0.2Hz)
+        31..70: pulsing(0.5Hz)
+        71..100: strobing
+      }
+    }
+    sound: layered [
+      heartbeat_base,
+      reactive { when movement_intensity > 50 add wind_chimes },
+      reactive { when proximity_close add breathing_echo }
+    ]
+  }
+
+  zones {
+    dance_floor: Circle(center, 8 meters) {
+      surface: responsive_floor
+      pressure_sensors: grid(10cm)
+    }
+    
+    audience_ring: Annulus(8m, 12m) {
+      seating: adaptive_layout
+      sightlines: guaranteed
+    }
+  }
+
+  safety_features {
+    guided_paths: tactile_rails
+    proximity_alert: gentle_breeze
+  }
+}
+
+prop SilkBlindfold {
+  material: organic_silk
+  effect: sensory_amplification
+  distribution: pre_ritual
+}
+
+actor Dancer {
+  count: 4
+  attire: flowing_silks
+  movement_style: FlowField {
+    attract: [space.center, audience.centroid]
+    avoid: other_dancers
+    flow: spiral_outward
+  }
+
+  interaction {
+    proximity: 1.5 meters
+    on_approach: mirror_movement
+    on_contact: join_flow
+    on_blindfold_applied: guide_hand_to_heart
+    on_blindfold_removed: gradual_reveal
+  }
+}
+
+actor VoiceOfTheTemple {
+  role: guide
+  behavior {
+    speech_pattern: poetic_chant
+    timing: match dance_phase {
+      buildup: accelerate
+      climax: sustain
+      release: decelerate
+    }
+  }
+  
+  triggers {
+    when audience.attention < 40%: call_to_presence
+    when dance_sync > 75%: affirm_harmony
+  }
+}
+
+scene Invocation {
+  location: TempleOfMovement.dance_floor
+  duration: 5 minutes
+  
+  actions {
+    Dancer.enter_from(cardinal_directions)
+    VoiceOfTheTemple.introduce_rhythm
+    atmosphere.transition_to(mystical_mist)
+  }
+  
+  transition_when: all_actors_positioned
+}
+
+scene BlindJourney extends Invocation {
+  phase: transition
+  requirements: SilkBlindfold.applied
+  
+  actions {
+    VoiceOfTheTemple.instruct_sensory_awakening
+    space.adjust_acoustics(spatial_3d)
+    dancers.enable_tactile_guidance
+  }
+  
+  rules {
+    movement: restricted_to_guided_paths
+    interaction_radius: 0.5 meters
+    safety_override: enable
+  }
+  
+  effects {
+    air: scent_diffuser [
+      frankincense,
+      reactive { when movement.directional add sea_breeze }
+    ]
+    floor: texture_mapping match rhythm_pattern
+  }
+}
+
+scene SacredUnion {
+  extends: Invocation
+  phase: active
+  
+  rules {
+    dancer_pattern: mandala_form
+    audience_participation: allow_movement
+    energy_transfer: enable
+  }
+  
+  triggers {
+    every 2 minutes: shift_rhythm
+    when audience_participation > 60%: activate_circle_dance
+  }
+}
+
+scene EcstaticRelease {
+  phase: climax
+  intensity: 90%
+  
+  effects {
+    lighting: rapid_strobe sync_with sound.bass
+    floor: ripple_effect follow_leader
+    air: wind_machine(max)
+    SilkBlindfold.remove_with(revelation_effect)
+    space.reveal_transformation
+  }
+  
+  conclusion: when energy_level < 30% fade_out
+}
+
+experience RiteOfFlow {
+  setup {
+    time: twilight
+    location: TempleOfMovement
+    required_actors: [Dancer, VoiceOfTheTemple]
+    required_props: [SilkBlindfold]
+  }
+
+  sequence {
+    Invocation -> BlindJourney when participants.ready
+    BlindJourney -> SacredUnion when sensory_engagement > 65%
+    SacredUnion <-> EcstaticRelease cycle 3 times
+    final_transition: gradual_descent
+  }
+
+  memory {
+    track: [movement_patterns, emotional_peaks, connection_points, sensory_acuity, guided_interactions, revelation_clarity]
+    persist: ritual_summary
+  }
+} 
